@@ -1,0 +1,242 @@
+﻿PROMPT DE DESENVOLVIMENTO: APLICATIVO ANDROID DE CONTROLE DE VENDAS
+1. CONTEXTO E OBJETIVO
+Desenvolver um aplicativo Android nativo para controle de vendas e gestão de clientes com funcionamento offline-first. O objetivo do sistema é permitir o cadastro de clientes, gerenciamento do catálogo de produtos, registro de vendas/lançamentos com leitura de código de barras/QR Code, controle financeiro de saldo devedor/pagamentos e exibição de relatórios de desempenho.
+2. REQUISITOS FUNCIONAIS POR TELA
+2.1. Tela de Entrada / Splash Screen
+1. Exibir a logo do aplicativo ocupando a maior parte da área central da tela.
+2. Botão de acesso rápido ("Entrar") sem autenticação por senha (modo provisório).
+2.2. Menu Principal
+Painel de navegação com acesso às seguintes seções:
+3. Cadastro de Cliente
+4. Cadastro de Produto
+5. Lista de Clientes / Lançamentos
+6. Relatórios
+7. Perfil
+2.3. Tela de Cadastro e Edição de Cliente
+8. Campos de formulário: Nome completo, Nome fantasia/resumido, Empresa, Telefone e E-mail.
+9. Módulo de Endereço: Entrada do CEP com funcionalidade de busca/preenchimento automático dos logradouros via API de CEP (ex: ViaCEP).
+2.4. Tela de Cadastro de Produto
+10. Campos de formulário: Descrição, Fornecedor, Preço de Custo/Compra e Preço de Venda.
+11. Campo Código de Barras / QR Code: Permite digitação manual ou captura automatizada via câmera do dispositivo.
+12. Anexo de imagens do produto (galeria/câmera).
+2.5. Lista de Clientes
+13. Listagem com busca e ordenação por nome do cliente.
+14. Ações ao selecionar um cliente: abrir Tela de Lançamentos, Editar Cadastro ou Visualizar Resumo do Cliente.
+2.6. Tela de Lançamentos (Registro de Vendas)
+15. Seleção de Produto: Campo de busca por texto com filtro dinâmico autocomplete ou botão para seleção em lista.
+16. Scanner Integrado: Botão com ícone de câmera para leitura instantânea de QR Code/Código de Barras e inclusão automática do produto.
+17. Entrada de Quantidade e Valor Unitário (sugerido a partir do cadastro, porém editável).
+18. Campo de Data/Hora do lançamento, pré-preenchido com o timestamp atual e editável.
+2.7. Resumo do Cliente e Conta Corrente
+19. Cabeçalho com exibição em destaque do Saldo Devedor Atual (Total de Vendas menos Total de Pagamentos).
+20. Funcionalidade para registrar Pagamentos/Abates (com valor e data do recebimento).
+21. Histórico unificado de lançamentos (vendas e pagamentos), ordenado cronologicamente da data mais recente para a mais antiga.
+2.8. Módulo de Relatórios
+Filtros temporais pré-definidos: Últimos 30 dias e Mês Corrente. Métricas requeridas:
+22. Volume total de vendas e total de pagamentos recebidos.
+23. Ranking de clientes por maior saldo devedor.
+24. Ranking de clientes por volume total de compras.
+25. Produtos mais vendidos por faturamento bruto (soma de valores).
+26. Produtos mais vendidos por quantidade de unidades negociadas.
+3. ARQUITETURA E TECNOLOGIAS RECOMENDADAS
+2.9. Tela de Backup e Recuperação
+27. Funcionalidade de Exportação: Permite gerar um arquivo de backup contendo todos os dados (clientes, produtos, lançamentos, pagamentos) em um formato legível pelo sistema (ex: JSON ou SQLite criptografado), salvando no armazenamento local do dispositivo.
+28. Funcionalidade de Importação/Restauração: Permite selecionar um arquivo de backup previamente gerado para restaurar a base de dados.
+29. Cenário de Uso: Facilitar a migração de dados de um celular para outro, permitindo que o usuário envie o arquivo de backup via serviços de nuvem, e-mail ou compartilhamento direto (Nearby Share/Bluetooth) e importe no novo dispositivo.
+30. Linguagem / Framework: Kotlin para Android Nativo (Jetpack Compose ou XML Views) ou Flutter/React Native.
+31. Banco de Dados Local: Room Persistence Library (SQLite) para armazenamento relacional seguro e reativo.
+32. Leitura de Código de Barras/QR Code: Google ML Kit Barcode Scanning ou ZXing.
+33. Consulta de CEP: Retrofit/Ktor integrado à API ViaCEP (HTTP REST API).
+4. REQUISITOS NÃO FUNCIONAIS E ARMAZENAMENTO
+34. Arquitetura Offline-First: Todos os dados operacionais devem ser persistidos localmente no banco SQLite para pleno uso sem internet.
+35. Módulo de Backup e Restauração: Exportação da base de dados em arquivo local (ex: JSON ou SQLite criptografado) e rotina de importação/recuperação posterior.
+36. Interface: Com exceção da tela de entrada (Splash Screen), todas as demais telas devem exibir uma imagem de fundo baseada no logo, com transparência acentuada (marca d'água).
+
+
+5. ESBOÇOS DE INTERFACE (WIREFRAMES TEXTUAIS)
+
+
+5.1. Tela de Entrada / Splash Screen
+Descrição do Comportamento Visual:
+37. Logo centralizada com destaque visual na parte central da tela.
+38. Botão inferior em largura total para entrada rápida sem necessidade de autenticação.
+
+
++---------------------------------+  
+|        CONTROLE DE VENDAS       |  
+|---------------------------------|  
+|                                 |  
+|             /------\            |  
+|            |  LOGO  |           |  
+|             \------/            |  
+|                                 |  
+|         Gestão Offline          |  
+|                                 |  
+|                                 |  
+|  +---------------------------+  |  
+|  |          ENTRAR           |  |  
+|  +---------------------------+  |  
++---------------------------------+  
+
+5.2. Menu Principal
+Descrição do Comportamento Visual:
+39. Navegação estruturada em cartões/botões verticais com facilidade de toque.
+40. Acesso direto a todas as seções operacionais e configurações do sistema.
+
+
++---------------------------------+  
+| Menu Principal                  |  
+|---------------------------------|  
+|  [+] Cadastrar Cliente          |  
+|  [+] Cadastrar Produto          |  
+|  [👥] Lista de Clientes          |  
+|  [📊] Relatórios                 |  
+|  [💾] Backup e Restauração       |  
+|  [👤] Perfil                     |  
++---------------------------------+  
+
+5.3. Tela de Cadastro e Edição de Cliente
+Descrição do Comportamento Visual:
+41. Campos de formulários organizados verticalmente.
+42. Botão "[Buscar CEP]" ao lado do campo CEP aciona o preenchimento automático via API ViaCEP dos campos Endereço, Bairro, Cidade e UF.
+
+
++---------------------------------+  
+| < Cadastro de Cliente          |  
+|---------------------------------|  
+| Nome Completo:                  |  
+| [_____________________________] |  
+| Nome Fantasia:                  |  
+| [_____________________________] |  
+| Empresa / Telefone / E-mail:    |  
+| [_____________________________] |  
+| CEP: [______] [Buscar CEP]     |  
+| Endereço / Cidade / UF:         |  
+| [_____________________________] |  
+|                                 |  
+| [ SALVAR CADASTRO ]             |  
++---------------------------------+  
+
+5.4. Tela de Cadastro de Produto
+Descrição do Comportamento Visual:
+43. Entrada de dados de produtos com leitor automático de código de barras/QR Code acionado pelo botão da câmera.
+44. Área de captura e pré-visualização da imagem do produto.
+
+
++---------------------------------+  
+| < Cadastro de Produto           |  
+|---------------------------------|  
+| Descrição:                      |  
+| [_____________________________] |  
+| Cod. Barras / QR Code:          |  
+| [____________________] [📷 Escan]|  
+| Preço Custo:    Preço Venda:    |  
+| [R$ 0,00   ]    [R$ 0,00   ]    |  
+| Imagem do Produto:              |  
+| [ + Anexar Foto (Galeria/Câmera)]|  
+|                                 |  
+| [ SALVAR PRODUTO ]              |  
++---------------------------------+  
+
+5.5. Lista de Clientes
+Descrição do Comportamento Visual:
+45. Barra de pesquisa no topo com filtro em tempo real.
+46. Cartões de clientes exibindo dados principais e saldo devedor em destaque, com menu rápido de ações (Lançamentos, Editar, Resumo).
+
+
++---------------------------------+  
+| < Clientes            [+ Novo]  |  
+|---------------------------------|  
+| [🔍 Buscar por nome...        ] |  
+|---------------------------------|  
+| Joao Silva                      |  
+| Saldo Devedor: R$ 150,00        |  
+| [> Lançar]  [✏️ Editar]  [📋 Ver] |  
+|---------------------------------|  
+| Maria Oliveira                  |  
+| Saldo Devedor: R$ 0,00          |  
+| [> Lançar]  [✏️ Editar]  [📋 Ver] |  
++---------------------------------+  
+
+5.6. Tela de Lançamentos (Registro de Vendas)
+Descrição do Comportamento Visual:
+47. Seleção rápida de produtos via autocomplete ou leitura de QR Code/Código de barras instantânea.
+48. Cálculo dinâmico do valor total antes da confirmação do registro.
+
+
++---------------------------------+  
+| < Registrar Venda               |  
+| Cliente: Joao Silva             |  
+|---------------------------------|  
+| Produto:                        |  
+| [Selecione / Busque... ] [📷 Esc]|  
+| Quantidade:     Valor Unitário: |  
+| [ 1      ]     [R$ 50,00  ]     |  
+| Data/Hora:                      |  
+| [26/08/2026 08:10            ]  |  
+| TOTAL: R$ 50,00                 |  
+|                                 |  
+| [ CONFIRMAR VENDA ]             |  
++---------------------------------+  
+
+5.7. Resumo do Cliente e Conta Corrente
+Descrição do Comportamento Visual:
+49. Painel superior com destaque claro do saldo devedor atual.
+50. Botão para inclusão imediata de pagamentos/abates.
+51. Extrato cronológico com identificação visual por marcadores (+) Venda e (-) Pagamento.
+
+
++---------------------------------+  
+| < Conta Corrente - Joao Silva   |  
+|---------------------------------|  
+| SALDO DEVEDOR: R$ 150,00        |  
+| [ + Registrar Pagamento/Abate ] |  
+|---------------------------------|  
+| Histórico:                      |  
+| 26/08 - (+) Venda: R$ 50,00     |  
+| 20/08 - (-) Pagamento: R$ 100,0 |  
+| 15/08 - (+) Venda: R$ 200,00    |  
++---------------------------------+  
+
+5.8. Módulo de Relatórios
+Descrição do Comportamento Visual:
+52. Filtros temporais dinâmicos no topo.
+53. Resumo métrico das operações e listas ordenadas por rankings de vendas e saldo devedor.
+
+
++---------------------------------+  
+| < Relatórios e Métricas         |  
+|---------------------------------|  
+| Filtro: [ Mês Corrente  v ]     |  
+|---------------------------------|  
+| Totais do Período:              |  
+| Vendas: R$ 5.400  | Pag: R$ 4.100|  
+|---------------------------------|  
+| Maiores Saldo Devedores:        |  
+| 1. Carlos Souza - R$ 850,00     |  
+| 2. Joao Silva   - R$ 150,00     |  
+|---------------------------------|  
+| Mais Vendidos (Qtd):            |  
+| 1. Prod A (50 un) | 2. Prod B   |  
++---------------------------------+  
+
+5.9. Tela de Backup e Recuperação
+Descrição do Comportamento Visual:
+54. Ações independentes e separadas para segurança da manipulação dos dados.
+55. Opções claras para exportação local/compartilhamento e restauração a partir de arquivo local armazenado.
+
+
++---------------------------------+  
+| < Backup e Restauração          |  
+|---------------------------------|  
+| Exportar Dados (Backup)         |  
+| Gera arquivo com toda a base de |  
+| clientes, produtos e vendas.    |  
+| [ 💾 GERAR BACKUP LOCAL ]       |  
+|---------------------------------|  
+| Importar Dados (Restaurar)      |  
+| Selecione um arquivo para       |  
+| restaurar as informações.       |  
+| [ 📁 SELECIONAR ARQUIVO ]       |  
++---------------------------------+  
+
