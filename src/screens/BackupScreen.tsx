@@ -22,7 +22,7 @@ export function BackupScreen() {
       const payload = await exportBackup()
       const filename = backupFileName()
       const content = serializeBackup(payload)
-      downloadTextFile(filename, content)
+      await downloadTextFile(filename, content)
       setMessage(`Backup salvo: ${filename}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao gerar backup')
@@ -40,7 +40,7 @@ export function BackupScreen() {
       const content = serializeBackup(payload)
       const shared = await shareBackupFile(filename, content)
       if (!shared) {
-        downloadTextFile(filename, content)
+        await downloadTextFile(filename, content)
         setMessage('Compartilhamento indisponível neste aparelho. O arquivo foi baixado.')
       } else {
         setMessage('Backup pronto para envio')

@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core'
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 import { db } from '../db'
 import type { BackupPayload } from '../types'
 
@@ -71,7 +74,31 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
   )
 }
 
-export function downloadTextFile(filename: string, content: string, mime = 'application/json'): void {
+async function writeBackupNative(filename: string, content: string): Promise<string> {
+  await Filesystem.writeFile({
+    path: filename,
+    data: content,
+    directory: Directory.Cache,
+    encoding: Encoding.UTF8,
+  })
+  const { uri } = await Filesystem.getUri({
+    path: filename,
+    directory: Directory.Cache,
+  })
+  return uri
+}
+
+export async function downloadTextFile(filename: string, content: string, mime = 'application/json'): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    const uri = await writeBackupNative(filename, content)
+    await Share.share({
+      title: 'Backup Controle de Vendas',
+      text: filename,
+      files: [uri],
+      dialogTitle: 'Salvar backup',
+    })
+    return
+  }
   const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -84,6 +111,16 @@ export function downloadTextFile(filename: string, content: string, mime = 'appl
 }
 
 export async function shareBackupFile(filename: string, content: string): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) {
+    const uri = await writeBackupNative(filename, content)
+    await Share.share({
+      title: 'Backup Controle de Vendas',
+      text: filename,
+      files: [uri],
+      dialogTitle: 'Enviar backup',
+    })
+    return true
+  }
   const file = new File([content], filename, { type: 'application/json' })
   const payload = { files: [file], title: 'Backup Controle de Vendas', text: filename }
   const nav = navigator as Navigator & {

@@ -1,6 +1,8 @@
 # Controle de Vendas — Beauty Brasil SJC
 
-Aplicativo de controle de vendas e gestão de clientes, feito para uso no celular (Android e iOS) com funcionamento **offline-first**. Os dados ficam no próprio aparelho; internet só entra na busca de CEP e no compartilhamento de backup.
+Aplicativo de controle de vendas e gestão de clientes, feito para uso no celular com funcionamento **offline-first**. Os dados ficam no próprio aparelho; internet só entra na busca de CEP e no compartilhamento de backup.
+
+No **Android**, instale o APK e use sem computador. No **iOS**, por enquanto o app ainda abre pelo Safari com o computador (ou um site) servindo a página — gerar um arquivo para a App Store exige um Mac e conta de desenvolvedor Apple.
 
 Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
 
@@ -21,7 +23,38 @@ Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
 
 Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil como marca d’água.
 
-## Como executar no computador
+## Instalar no Android (sem computador)
+
+O arquivo pronto para instalar está em:
+
+`release/ControleDeVendas.apk`
+
+Depois de instalado, o app **não precisa do computador**. Ele abre pelo ícone **Controle de Vendas**, guarda clientes e vendas no celular e só usa internet para buscar CEP ou enviar backup.
+
+### Como instalar no celular
+
+1. Copie `ControleDeVendas.apk` para o Android (cabo USB, Google Drive, WhatsApp, e-mail, cartão SD, etc.).
+2. Abra o arquivo no celular (app **Arquivos** ou o próprio Drive/WhatsApp).
+3. Se o Android avisar que o app veio de uma fonte desconhecida: **Ajustes → Aplicativos → Acesso especial → Instalar apps desconhecidos** (o nome varia conforme a marca) e permita o Chrome, Drive ou Arquivos.
+4. Toque em **Instalar** e depois em **Abrir**.
+5. Na primeira leitura de código de barras, permita o uso da **câmera**.
+
+Requisitos: Android 7 ou superior. Este APK é de desenvolvimento (assinado em modo debug), adequado para uso interno da clínica. Não está na Play Store.
+
+### Gerar o APK de novo (no computador de desenvolvimento)
+
+Pré-requisitos: Node.js 22+, JDK 21 e Android SDK.
+
+```bash
+npm install
+export JAVA_HOME=/caminho/do/jdk-21
+export ANDROID_HOME=/caminho/do/Android/Sdk
+npm run android:apk
+```
+
+O arquivo atualizado sai em `release/ControleDeVendas.apk`.
+
+## Como executar no computador (desenvolvimento)
 
 Pré-requisito: Node.js 22+.
 
@@ -30,39 +63,29 @@ npm install
 npm run dev
 ```
 
-O Vite imprime dois endereços. Use `http://localhost:5173` no próprio computador. A linha **Network** (por exemplo `http://192.168.30.5:5173`) é a que o celular deve abrir.
+Abra `http://localhost:5173` no próprio computador.
 
-Para gerar os arquivos estáticos e servir o build:
+Para gerar só os arquivos web:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-O computador precisa permanecer ligado, com o comando `npm run dev` (ou `npm run preview`) em execução, enquanto o celular usa o app nesta rede.
+## Android ou iOS pelo navegador (precisa de um servidor)
 
-## Como rodar no celular Android
+Use isto só para testar na rede local, **sem instalar o APK**. O computador precisa permanecer ligado, com `npm run dev` (ou `npm run preview`) em execução.
 
 1. Celular e computador na **mesma rede Wi-Fi** (não use o 4G/5G do telefone).
-2. No computador, rode `npm run dev` e anote o endereço **Network** (IP da máquina + porta `5173`).
-3. No Android, abra o **Chrome** (não use o navegador do Instagram/WhatsApp).
-4. Digite o endereço, por exemplo `http://192.168.30.5:5173`, e toque em **Entrar**.
-5. Na primeira vez, permita o acesso à câmera se for usar o leitor de código de barras.
-6. Para usar como aplicativo, no Chrome toque no menu **⋮** → **Adicionar à tela inicial** (ou **Instalar aplicativo**). Confirme. O ícone **Vendas** aparece junto dos outros apps e abre em tela cheia.
+2. No computador, anote o endereço **Network** (por exemplo `http://192.168.30.5:5173`).
+3. **Android:** abra o **Chrome**, digite o endereço e toque em **Entrar**. Opcional: menu **⋮** → **Adicionar à tela inicial**.
+4. **iPhone / iPad:** abra o **Safari**, digite o endereço e toque em **Entrar**. Para atalho: **Compartilhar** → **Adicionar à Tela de Início**.
 
-Se a página não abrir: confirme o Wi-Fi, desative VPN, e no computador libere a porta `5173` no firewall. O IP muda se o computador reconectar à rede — neste caso, rode `npm run dev` de novo e use o endereço novo.
+Se a página não abrir: confirme o Wi-Fi, desative VPN e libere a porta `5173` no firewall do computador. O IP muda se o computador reconectar à rede.
 
-## Como rodar no celular iOS (iPhone / iPad)
+No iPhone, a câmera (código de barras) costuma ser bloqueada em páginas `http://` da rede local. Digite o código manualmente. A foto do produto pela galeria continua disponível.
 
-1. iPhone e computador na **mesma rede Wi-Fi**.
-2. No computador, rode `npm run dev` e anote o endereço **Network**.
-3. No iOS, abra o **Safari** (o atalho na tela inicial só funciona bem a partir do Safari).
-4. Digite o endereço, por exemplo `http://192.168.30.5:5173`, e toque em **Entrar**.
-5. Para instalar: toque em **Compartilhar** (quadrado com seta) → **Adicionar à Tela de Início** → **Adicionar**. Abra o ícone **Vendas** na tela inicial para usar em modo aplicativo.
-
-No iPhone, a câmera (código de barras) costuma ser bloqueada em páginas `http://` da rede local. Nesse caso, digite o código manualmente no cadastro de produto ou no lançamento. A foto do produto pela galeria continua disponível.
-
-Em **Ajustes → Safari**, permita o site se o iOS pedir permissão de câmera ou de dados do site.
+Um aplicativo iOS independente (como o APK no Android) ainda não está neste repositório: a geração de IPA exige Xcode em um Mac e conta Apple Developer.
 
 ## Uso no dia a dia
 
@@ -85,6 +108,7 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 ## Stack
 
 - React 18 + TypeScript + Vite
+- Capacitor 8 (APK Android)
 - Dexie (persistência local)
 - html5-qrcode (código de barras e QR Code)
 - ViaCEP (HTTP REST)
@@ -94,10 +118,9 @@ O documento original de requisitos está em `docs/Prompt controle de vendas.txt`
 ## Estrutura
 
 ```
-src/
-  screens/       telas do fluxo
-  components/    layout, marca d’água e scanner
-  services/      CEP, backup e relatórios
-  db.ts          banco local
+src/             telas, banco local, CEP, backup e relatórios
 public/          logo e manifesto PWA
+android/         projeto nativo gerado pelo Capacitor
+release/         APK para instalar no celular (ControleDeVendas.apk)
+scripts/         build-apk.sh — gera o APK de novo
 ```
