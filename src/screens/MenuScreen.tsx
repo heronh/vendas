@@ -45,6 +45,12 @@ export function MenuScreen() {
           title="Perfil"
           subtitle="Dados da profissional / clínica"
         />
+        <MenuLink
+          to="/ajuda"
+          icon="?"
+          title="Ajuda"
+          subtitle="Veja o passo a passo animado"
+        />
       </nav>
       <p className="brand-foot">Beauty Brasil SJC · Estética e Bem-Estar</p>
     </main>

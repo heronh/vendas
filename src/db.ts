@@ -51,6 +51,26 @@ export async function clientBalanceCents(clientId: string): Promise<number> {
   return sold - paid
 }
 
+export async function resetAllData(): Promise<void> {
+  await db.transaction(
+    'rw',
+    db.clients,
+    db.products,
+    db.sales,
+    db.payments,
+    db.profile,
+    async () => {
+      await Promise.all([
+        db.clients.clear(),
+        db.products.clear(),
+        db.sales.clear(),
+        db.payments.clear(),
+        db.profile.clear(),
+      ])
+    },
+  )
+}
+
 export async function balancesByClient(): Promise<Map<string, number>> {
   const [sales, payments] = await Promise.all([
     db.sales.toArray(),

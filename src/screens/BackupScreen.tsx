@@ -1,5 +1,6 @@
 import { ChangeEvent, useState } from 'react'
 import { Button, Topbar } from '../components/ui'
+import { resetAllData } from '../db'
 import {
   backupFileName,
   downloadTextFile,
@@ -14,6 +15,7 @@ export function BackupScreen() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
 
   async function generate() {
     setError('')
@@ -74,6 +76,20 @@ export function BackupScreen() {
     }
   }
 
+  async function confirmReset() {
+    setError('')
+    setBusy(true)
+    try {
+      await resetAllData()
+      setResetOpen(false)
+      setMessage('Configurações restauradas. Todos os dados foram apagados.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível apagar os dados')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <main>
       <Topbar title="Backup e Restauração" backTo="/menu" />
@@ -104,8 +120,45 @@ export function BackupScreen() {
           <input type="file" accept="application/json,.json" onChange={onFile} />
         </label>
       </section>
+      <section className="card stack" style={{ marginTop: 14, borderColor: 'rgba(198, 40, 40, 0.35)' }}>
+        <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem', color: '#c62828' }}>
+          Restaurar configurações
+        </h2>
+        <p className="muted">
+          Apaga clientes, produtos, vendas, pagamentos e perfil deste aparelho e volta ao estado
+          inicial.
+        </p>
+        <Button variant="danger" onClick={() => setResetOpen(true)} disabled={busy}>
+          Restaurar configurações
+        </Button>
+      </section>
       {message ? <p className="ok">{message}</p> : null}
       {error ? <p className="error">{error}</p> : null}
+      {resetOpen ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+          <div className="modal">
+            <h2 id="reset-title" style={{ fontFamily: 'var(--serif)', marginTop: 0, color: '#c62828' }}>
+              Atenção
+            </h2>
+            <p>
+              Faça um <strong>backup agora</strong>, se ainda precisar dos dados. Depois desta
+              confirmação, clientes, produtos, vendas e pagamentos serão apagados.
+            </p>
+            <p className="error">
+              Esta ação não pode ser desfeita. Sem um arquivo de backup, não há como restaurar as
+              informações.
+            </p>
+            <div className="stack">
+              <Button variant="danger" onClick={confirmReset} disabled={busy}>
+                Apagar todos os dados
+              </Button>
+              <Button variant="ghost" onClick={() => setResetOpen(false)} disabled={busy}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

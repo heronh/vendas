@@ -10,6 +10,7 @@ import { ProductListScreen } from './screens/ProductListScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ReportsScreen } from './screens/ReportsScreen'
 import { SaleScreen } from './screens/SaleScreen'
+import { HelpScreen } from './screens/HelpScreen'
 import { SplashScreen } from './screens/SplashScreen'
 
 export function App() {
@@ -30,6 +31,7 @@ export function App() {
           <Route path="/relatorios" element={<ReportsScreen />} />
           <Route path="/backup" element={<BackupScreen />} />
           <Route path="/perfil" element={<ProfileScreen />} />
+          <Route path="/ajuda" element={<HelpScreen />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
