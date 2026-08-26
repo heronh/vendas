@@ -82,7 +82,7 @@ export function MenuLink({
   subtitle,
 }: {
   to: string
-  icon: string
+  icon: ReactNode
   title: string
   subtitle: string
 }) {

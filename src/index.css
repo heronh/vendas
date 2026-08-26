@@ -270,6 +270,13 @@ a {
   text-align: center;
 }
 
+.menu-ico img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
 .card {
   background: rgba(255, 250, 243, 0.9);
   border: 1px solid var(--line);

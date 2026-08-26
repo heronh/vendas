@@ -1,4 +1,5 @@
 import { MenuLink } from '../components/ui'
+import produtoIcon from '../../docs/produto.svg'
 
 export function MenuScreen() {
   return (
@@ -17,7 +18,7 @@ export function MenuScreen() {
         />
         <MenuLink
           to="/produtos/novo"
-          icon="▣"
+          icon={<img src={produtoIcon} alt="" />}
           title="Cadastrar Produto"
           subtitle="Preços, código de barras e foto"
         />
