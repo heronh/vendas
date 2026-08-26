@@ -21,7 +21,7 @@ Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
 
 Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil como marca d’água.
 
-## Como executar
+## Como executar no computador
 
 Pré-requisito: Node.js 22+.
 
@@ -30,16 +30,39 @@ npm install
 npm run dev
 ```
 
-Abra o endereço local (em geral `http://localhost:5173`) no navegador do computador ou no celular na mesma rede.
+O Vite imprime dois endereços. Use `http://localhost:5173` no próprio computador. A linha **Network** (por exemplo `http://192.168.30.5:5173`) é a que o celular deve abrir.
 
-Para gerar os arquivos estáticos:
+Para gerar os arquivos estáticos e servir o build:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-No Android ou iOS, abra o endereço no Chrome/Safari e use **Adicionar à tela inicial** para usar como aplicativo (PWA).
+O computador precisa permanecer ligado, com o comando `npm run dev` (ou `npm run preview`) em execução, enquanto o celular usa o app nesta rede.
+
+## Como rodar no celular Android
+
+1. Celular e computador na **mesma rede Wi-Fi** (não use o 4G/5G do telefone).
+2. No computador, rode `npm run dev` e anote o endereço **Network** (IP da máquina + porta `5173`).
+3. No Android, abra o **Chrome** (não use o navegador do Instagram/WhatsApp).
+4. Digite o endereço, por exemplo `http://192.168.30.5:5173`, e toque em **Entrar**.
+5. Na primeira vez, permita o acesso à câmera se for usar o leitor de código de barras.
+6. Para usar como aplicativo, no Chrome toque no menu **⋮** → **Adicionar à tela inicial** (ou **Instalar aplicativo**). Confirme. O ícone **Vendas** aparece junto dos outros apps e abre em tela cheia.
+
+Se a página não abrir: confirme o Wi-Fi, desative VPN, e no computador libere a porta `5173` no firewall. O IP muda se o computador reconectar à rede — neste caso, rode `npm run dev` de novo e use o endereço novo.
+
+## Como rodar no celular iOS (iPhone / iPad)
+
+1. iPhone e computador na **mesma rede Wi-Fi**.
+2. No computador, rode `npm run dev` e anote o endereço **Network**.
+3. No iOS, abra o **Safari** (o atalho na tela inicial só funciona bem a partir do Safari).
+4. Digite o endereço, por exemplo `http://192.168.30.5:5173`, e toque em **Entrar**.
+5. Para instalar: toque em **Compartilhar** (quadrado com seta) → **Adicionar à Tela de Início** → **Adicionar**. Abra o ícone **Vendas** na tela inicial para usar em modo aplicativo.
+
+No iPhone, a câmera (código de barras) costuma ser bloqueada em páginas `http://` da rede local. Nesse caso, digite o código manualmente no cadastro de produto ou no lançamento. A foto do produto pela galeria continua disponível.
+
+Em **Ajustes → Safari**, permita o site se o iOS pedir permissão de câmera ou de dados do site.
 
 ## Uso no dia a dia
 
