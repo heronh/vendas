@@ -2,20 +2,40 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Topbar } from '../components/ui'
 
 type DemoField = { label: string; value: string }
-type DemoKind = 'form' | 'sale' | 'payment'
+type SceneKind = 'menu' | 'form' | 'clients' | 'products' | 'sale' | 'payment'
+type ListAction = 'back' | 'lancar'
 
 interface Scene {
-  kind: DemoKind
+  kind: SceneKind
+  step: number
   title: string
   caption: string
   screenTitle: string
-  fields: DemoField[]
-  button: string
+  highlight?: string
+  action?: ListAction
+  fields?: DemoField[]
+  button?: string
+  due?: string
 }
+
+const MENU_ITEMS = [
+  { icon: '+', title: 'Cadastrar Cliente', subtitle: 'Nome, contato e endereço com CEP' },
+  { icon: '▣', title: 'Cadastrar Produto', subtitle: 'Preços, código de barras e foto' },
+  { icon: '👥', title: 'Lista de Clientes', subtitle: 'Lançamentos, edição e conta corrente' },
+]
 
 const SCENES: Scene[] = [
   {
+    kind: 'menu',
+    step: 0,
+    title: 'Passo 1 · Cliente',
+    caption: 'No Menu Principal, toque em Cadastrar Cliente.',
+    screenTitle: 'Menu Principal',
+    highlight: 'Cadastrar Cliente',
+  },
+  {
     kind: 'form',
+    step: 0,
     title: 'Passo 1 · Cliente',
     caption: 'Cadastre a cliente com nome, contato e endereço. O CEP preenche cidade e rua.',
     screenTitle: 'Cadastro de Cliente',
@@ -29,7 +49,25 @@ const SCENES: Scene[] = [
     button: 'Salvar cadastro',
   },
   {
+    kind: 'clients',
+    step: 0,
+    title: 'Passo 1 · Cliente',
+    caption: 'Ao salvar, a lista de clientes abre. Toque em voltar para o menu.',
+    screenTitle: 'Clientes',
+    action: 'back',
+    due: 'R$ 0,00',
+  },
+  {
+    kind: 'menu',
+    step: 1,
+    title: 'Passo 2 · Produto',
+    caption: 'De volta ao menu, toque em Cadastrar Produto.',
+    screenTitle: 'Menu Principal',
+    highlight: 'Cadastrar Produto',
+  },
+  {
     kind: 'form',
+    step: 1,
     title: 'Passo 2 · Produto',
     caption: 'Inclua o procedimento no catálogo, com preço de venda e código de barras.',
     screenTitle: 'Cadastro de Produto',
@@ -43,9 +81,35 @@ const SCENES: Scene[] = [
     button: 'Salvar produto',
   },
   {
-    kind: 'sale',
+    kind: 'products',
+    step: 1,
+    title: 'Passo 2 · Produto',
+    caption: 'O produto entra na lista. Volte ao menu para registrar a venda.',
+    screenTitle: 'Produtos',
+    action: 'back',
+  },
+  {
+    kind: 'menu',
+    step: 2,
     title: 'Passo 3 · Venda',
-    caption: 'Na lista, toque em Lançar. Busque o produto; o valor unitário vem do cadastro.',
+    caption: 'Toque em Lista de Clientes para lançar a venda.',
+    screenTitle: 'Menu Principal',
+    highlight: 'Lista de Clientes',
+  },
+  {
+    kind: 'clients',
+    step: 2,
+    title: 'Passo 3 · Venda',
+    caption: 'Na ficha da Ana, toque em Lançar.',
+    screenTitle: 'Clientes',
+    action: 'lancar',
+    due: 'R$ 0,00',
+  },
+  {
+    kind: 'sale',
+    step: 2,
+    title: 'Passo 3 · Venda',
+    caption: 'Busque o produto; o valor unitário vem do cadastro.',
     screenTitle: 'Registrar Venda',
     fields: [
       { label: 'Produto', value: 'Limpeza de pele profunda' },
@@ -56,8 +120,9 @@ const SCENES: Scene[] = [
   },
   {
     kind: 'payment',
+    step: 3,
     title: 'Passo 4 · Pagamento',
-    caption: 'Na conta corrente, registre um abate. O saldo cai, mas a venda permanece no histórico.',
+    caption: 'A venda abre a conta corrente. Registre um abate; o saldo cai e o histórico permanece.',
     screenTitle: 'Conta corrente',
     fields: [{ label: 'Valor do pagamento', value: 'R$ 80,00' }],
     button: 'Salvar pagamento',
@@ -76,26 +141,48 @@ function usePrefersReducedMotion(): boolean {
   return reduced
 }
 
+function isFormScene(kind: SceneKind) {
+  return kind === 'form' || kind === 'sale' || kind === 'payment'
+}
+
 export function HelpScreen() {
   const reducedMotion = usePrefersReducedMotion()
   const [sceneIndex, setSceneIndex] = useState(0)
   const [fieldIndex, setFieldIndex] = useState(0)
   const [typed, setTyped] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [tapping, setTapping] = useState(false)
   const [done, setDone] = useState(false)
   const [paused, setPaused] = useState(false)
   const [runId, setRunId] = useState(0)
 
   const scene = SCENES[Math.min(sceneIndex, SCENES.length - 1)]
-  const charDelay = reducedMotion ? 0 : 32
-  const fieldPause = reducedMotion ? 0 : 420
-  const savePause = reducedMotion ? 200 : 1100
+  const charDelay = reducedMotion ? 0 : 85
+  const fieldPause = reducedMotion ? 0 : 1100
+  const savePause = reducedMotion ? 200 : 2200
+  const navHold = reducedMotion ? 120 : 1800
+  const tapHold = reducedMotion ? 80 : 750
+
+  const goNext = useCallback(() => {
+    if (sceneIndex >= SCENES.length - 1) {
+      setDone(true)
+      setSaving(false)
+      setTapping(false)
+      return
+    }
+    setSaving(false)
+    setTapping(false)
+    setSceneIndex((i) => i + 1)
+    setFieldIndex(0)
+    setTyped(0)
+  }, [sceneIndex])
 
   const reset = useCallback(() => {
     setSceneIndex(0)
     setFieldIndex(0)
     setTyped(0)
     setSaving(false)
+    setTapping(false)
     setDone(false)
     setPaused(false)
     setRunId((id) => id + 1)
@@ -108,7 +195,18 @@ export function HelpScreen() {
       setDone(true)
       return
     }
-    const field = current.fields[fieldIndex]
+
+    if (!isFormScene(current.kind)) {
+      if (!tapping) {
+        const timer = window.setTimeout(() => setTapping(true), navHold)
+        return () => window.clearTimeout(timer)
+      }
+      const timer = window.setTimeout(goNext, tapHold)
+      return () => window.clearTimeout(timer)
+    }
+
+    const fields = current.fields ?? []
+    const field = fields[fieldIndex]
     if (field && typed < field.value.length) {
       const timer = window.setTimeout(() => setTyped((n) => n + 1), charDelay || 16)
       return () => window.clearTimeout(timer)
@@ -121,32 +219,40 @@ export function HelpScreen() {
       return () => window.clearTimeout(timer)
     }
     if (!saving) {
-      const timer = window.setTimeout(() => setSaving(true), reducedMotion ? 80 : 380)
+      const timer = window.setTimeout(() => setSaving(true), reducedMotion ? 80 : 900)
       return () => window.clearTimeout(timer)
     }
-    const timer = window.setTimeout(() => {
-      if (sceneIndex >= SCENES.length - 1) {
-        setDone(true)
-        setSaving(false)
-        return
-      }
-      setSaving(false)
-      setSceneIndex((i) => i + 1)
-      setFieldIndex(0)
-      setTyped(0)
-    }, savePause)
+    const timer = window.setTimeout(goNext, savePause)
     return () => window.clearTimeout(timer)
-  }, [sceneIndex, fieldIndex, typed, saving, paused, done, charDelay, fieldPause, savePause, reducedMotion, runId])
+  }, [
+    sceneIndex,
+    fieldIndex,
+    typed,
+    saving,
+    tapping,
+    paused,
+    done,
+    charDelay,
+    fieldPause,
+    savePause,
+    navHold,
+    tapHold,
+    reducedMotion,
+    runId,
+    goNext,
+  ])
 
   const filled = useMemo(() => {
-    return scene.fields.map((field, index) => {
+    const fields = scene.fields ?? []
+    return fields.map((field, index) => {
       if (index < fieldIndex) return field.value
       if (index === fieldIndex) return field.value.slice(0, typed)
       return ''
     })
   }, [scene, fieldIndex, typed])
 
-  const highlighting = !saving && !done && fieldIndex < scene.fields.length
+  const highlighting = isFormScene(scene.kind) && !saving && !done && fieldIndex < (scene.fields?.length ?? 0)
+  const showBack = scene.kind !== 'menu'
 
   return (
     <main>
@@ -156,26 +262,51 @@ export function HelpScreen() {
       </p>
 
       <div className="help-progress" aria-hidden>
-        {SCENES.map((item, index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <span
-            key={item.title}
-            className={`help-dot${index === sceneIndex && !done ? ' is-active' : ''}${index < sceneIndex || done ? ' is-done' : ''}`}
+            key={index}
+            className={`help-dot${index === scene.step && !done ? ' is-active' : ''}${index < scene.step || done ? ' is-done' : ''}`}
           />
         ))}
       </div>
       <p className="help-step-title">{done ? 'Fluxo completo' : scene.title}</p>
-      <p className="help-caption">{done ? 'Cliente, produto, venda e pagamento parcial — nessa ordem.' : scene.caption}</p>
+      <p className="help-caption">
+        {done
+          ? 'Menu, cadastros, lista, venda e pagamento parcial — nessa ordem.'
+          : scene.caption}
+      </p>
 
       <div className="help-phone" aria-live="polite" key={done ? 'done' : sceneIndex}>
-        <div className="help-phone-bar">{scene.screenTitle}</div>
-        {scene.kind !== 'payment' ? (
+        <div className="help-phone-bar">
+          {showBack ? (
+            <span
+              className={`help-back${tapping && scene.action === 'back' ? ' is-pressed' : ''}`}
+              aria-hidden
+            >
+              ‹
+            </span>
+          ) : (
+            <span className="help-back-spacer" />
+          )}
+          <span className="help-phone-title">{scene.screenTitle}</span>
+          <span className="help-back-spacer" />
+        </div>
+
+        {scene.kind === 'menu' ? (
+          <MenuDemo highlight={scene.highlight} tapping={tapping} />
+        ) : null}
+        {scene.kind === 'clients' ? (
+          <ClientsDemo due={scene.due ?? 'R$ 0,00'} action={scene.action} tapping={tapping} />
+        ) : null}
+        {scene.kind === 'products' ? <ProductsDemo /> : null}
+        {scene.kind === 'form' || scene.kind === 'sale' ? (
           <div className="help-fields">
             {scene.kind === 'sale' ? (
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 Cliente: <strong>Ana Beatriz Costa</strong>
               </p>
             ) : null}
-            {scene.fields.map((field, index) => (
+            {(scene.fields ?? []).map((field, index) => (
               <div
                 key={field.label}
                 className={`help-field${highlighting && index === fieldIndex ? ' is-typing' : ''}${index < fieldIndex ? ' is-filled' : ''}`}
@@ -194,15 +325,19 @@ export function HelpScreen() {
               </div>
             ) : null}
           </div>
-        ) : (
+        ) : null}
+        {scene.kind === 'payment' ? (
           <PaymentDemo
             amountTyped={filled[0] ?? ''}
             typing={highlighting}
             saving={saving}
             done={done}
           />
-        )}
-        <div className={`help-save${saving ? ' is-pressed' : ''}`}>{scene.button}</div>
+        ) : null}
+
+        {scene.button ? (
+          <div className={`help-save${saving ? ' is-pressed' : ''}`}>{scene.button}</div>
+        ) : null}
       </div>
 
       <div className="stack" style={{ marginTop: 14 }}>
@@ -214,6 +349,70 @@ export function HelpScreen() {
         </Button>
       </div>
     </main>
+  )
+}
+
+function MenuDemo({ highlight, tapping }: { highlight?: string; tapping: boolean }) {
+  return (
+    <div className="help-menu">
+      {MENU_ITEMS.map((item) => {
+        const target = item.title === highlight
+        return (
+          <div
+            key={item.title}
+            className={`help-menu-item${target ? ' is-target' : ''}${target && tapping ? ' is-pressed' : ''}`}
+          >
+            <span className="help-menu-ico" aria-hidden>
+              {item.icon}
+            </span>
+            <span>
+              <strong>{item.title}</strong>
+              <em>{item.subtitle}</em>
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ClientsDemo({
+  due,
+  action,
+  tapping,
+}: {
+  due: string
+  action?: ListAction
+  tapping: boolean
+}) {
+  const paidOff = due === 'R$ 0,00'
+  return (
+    <div className="help-fields">
+      <article className="help-card">
+        <h3>Ana Beatriz Costa</h3>
+        <p className="muted">Ana</p>
+        <p className={`balance ${paidOff ? 'zero' : 'due'}`}>Saldo devedor: {due}</p>
+        <div className="help-mini-actions">
+          <span className={`help-mini-btn is-navy${action === 'lancar' && tapping ? ' is-pressed' : ''}${action === 'lancar' && !tapping ? ' is-target' : ''}`}>
+            Lançar
+          </span>
+          <span className="help-mini-btn">Editar</span>
+          <span className="help-mini-btn">Ver</span>
+        </div>
+      </article>
+    </div>
+  )
+}
+
+function ProductsDemo() {
+  return (
+    <div className="help-fields">
+      <article className="help-card">
+        <h3>Limpeza de pele profunda</h3>
+        <p className="muted">Beauty Brasil SJC</p>
+        <p className="balance zero">Venda: R$ 180,00</p>
+      </article>
+    </div>
   )
 }
 
@@ -231,6 +430,9 @@ function PaymentDemo({
   const paid = saving || done
   return (
     <div className="help-fields">
+      <p className="muted" style={{ margin: '0 0 8px' }}>
+        Ana Beatriz Costa
+      </p>
       <div className="hero-balance" style={{ marginBottom: 10, padding: '14px 10px' }}>
         <small>Saldo devedor atual</small>
         <strong>{paid ? 'R$ 100,00' : 'R$ 180,00'}</strong>
