@@ -91,9 +91,9 @@ export function MenuLink({
       <span className="menu-ico" aria-hidden>
         {icon}
       </span>
-      <span>
+      <span className="menu-item-text">
         <strong>{title}</strong>
-        <span>{subtitle}</span>
+        <span className="menu-item-sub">{subtitle}</span>
       </span>
     </Link>
   )
