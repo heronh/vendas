@@ -37,8 +37,8 @@ export function MenuScreen() {
         <MenuLink
           to="/backup"
           icon="💾"
-          title="Backup e Restauração"
-          subtitle="Migrar dados entre aparelhos"
+          title="Backup e sincronização"
+          subtitle="Servidor local, arquivo e restauração"
         />
         <MenuLink
           to="/perfil"

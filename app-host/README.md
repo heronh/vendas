@@ -1,11 +1,35 @@
-# Controle de Vendas — host de backup e sincronização
+# Controle de Vendas — host Go + Postgres
 
-Pasta reservada para o **servidor de backup e sincronização**.
+Servidor para o computador da clínica: autenticação por senha na página, catálogo de produtos no Postgres e sincronização com os celulares na mesma rede Wi-Fi.
 
-Ainda **não há código** aqui. No futuro este host deve receber backups das aplicações móveis e sincronizar dados entre aparelhos, sem substituir o modo offline-first dos clientes.
+O aplicativo **Android** já cadastra este host (código de 6 dígitos). O **iOS** ainda não tem app; a API (`/api/discover`, `/api/pair`, `/api/sync`) fica pronta para o mesmo fluxo.
 
-Instruções comuns a todas as aplicações estão no [README da raiz](../README.md).
+## Pré-requisitos
 
-## Quando existir implementação
+- Go 1.22+
+- Docker (Postgres)
+- Celular e computador na mesma Wi-Fi
 
-Instruções de execução, API, persistência e implantação serão documentadas neste arquivo.
+## Como executar
+
+```bash
+cd app-host
+docker compose up -d
+export HOST_PASSWORD='sua-senha'
+export DATABASE_URL='postgres://vendas:vendas@127.0.0.1:5432/vendas?sslmode=disable'
+go run .
+```
+
+Abra `http://IP-DO-COMPUTADOR:3847`, entre com `HOST_PASSWORD` e use o código de 6 dígitos em **Backup e sincronização** no Android.
+
+Variáveis opcionais: `PORT` (padrão `3847`), `SESSION_SECRET` (se vazio, a sessão reinicia a cada processo).
+
+## O que fica no banco
+
+| Tabela | Origem |
+| --- | --- |
+| `products` | Criados na página do host (`source = local`) ou enviados pelos celulares (`source = phone`) |
+| `clients`, `sales`, `payments` | Backup recebido na sincronização |
+| `device_tokens` | Tokens após o pareamento |
+
+Na sincronização o host devolve o catálogo completo de produtos; o celular importa os que ainda não tem.

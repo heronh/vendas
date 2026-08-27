@@ -10,7 +10,7 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 | --- | --- | --- |
 | [app-android](app-android/README.md) | Aplicativo Android (APK / Capacitor) | Implementado |
 | [app-ios](app-ios/README.md) | Aplicativo iPhone / iPad | Reservado (ainda sem código) |
-| [app-host](app-host/README.md) | Host de backup e sincronização | Reservado (ainda sem código) |
+| [app-host](app-host/README.md) | Host Go + Postgres (senha, produtos, sync Wi-Fi) | Implementado |
 
 ## O que o app faz
 
@@ -24,7 +24,7 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 | Lançamentos | Autocomplete de produto, scanner, quantidade, valor unitário editável e data/hora |
 | Conta corrente | Saldo devedor (vendas − pagamentos), registro de abates e histórico unificado |
 | Relatórios | Filtros *mês corrente* e *últimos 30 dias*, totais e rankings |
-| Backup | Exportar JSON local, compartilhar e restaurar em outro aparelho |
+| Backup | Exportar JSON, cadastrar servidor local e restaurar em outro aparelho |
 | Perfil | Dados da profissional/clínica neste dispositivo |
 
 Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil como marca d’água.
@@ -33,7 +33,7 @@ Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil c
 
 - **Android:** instale o APK em `app-android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [app-android/README.md](app-android/README.md).
 - **iOS:** ainda não há aplicativo nativo neste repositório. Gerar IPA exige Xcode em um Mac e conta Apple Developer. Enquanto isso, o fluxo web pode ser aberto no Safari (veja abaixo).
-- **Host:** o servidor de backup e sincronização ainda não foi implementado. Os dados continuam só no aparelho.
+- **Host:** Postgres via Docker e `go run .` em `app-host`. A página pede senha; o celular Android cadastra o servidor com o código de 6 dígitos. iOS ainda sem app. Veja [app-host/README.md](app-host/README.md).
 
 ## Como executar no computador (desenvolvimento)
 
@@ -73,7 +73,7 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 
 ## Dados e privacidade
 
-- Tudo é gravado localmente (IndexedDB / SQLite do navegador). Não há servidor de negócio ainda (`app-host` está reservado para isso).
+- No celular, os dados ficam localmente (IndexedDB / SQLite). O host em `app-host` guarda produtos (locais e sincronizados) e o backup enviado pelos aparelhos no Postgres.
 - O backup é um JSON legível com clientes, produtos, vendas, pagamentos e perfil.
 - A restauração **substitui** a base atual do aparelho.
 - A consulta de CEP usa a API pública [ViaCEP](https://viacep.com.br).

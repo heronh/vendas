@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vendas
+      POSTGRES_PASSWORD: vendas
+      POSTGRES_DB: vendas
+    ports:
+      - "5432:5432"
+    volumes:
+      - vendas_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vendas -d vendas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vendas_pg:

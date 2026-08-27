@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Client, Payment, Product, Profile, Sale } from './types'
+import type { AppSetting, Client, Payment, Product, Profile, Sale } from './types'
 
 export class VendasDB extends Dexie {
   clients!: Table<Client, string>
@@ -7,6 +7,7 @@ export class VendasDB extends Dexie {
   sales!: Table<Sale, string>
   payments!: Table<Payment, string>
   profile!: Table<Profile, string>
+  settings!: Table<AppSetting, string>
 
   constructor() {
     super('vendas-beauty-brasil')
@@ -16,6 +17,9 @@ export class VendasDB extends Dexie {
       sales: 'id, clientId, occurredAt, productId',
       payments: 'id, clientId, occurredAt',
       profile: 'id',
+    })
+    this.version(2).stores({
+      settings: 'id',
     })
   }
 }
@@ -52,23 +56,16 @@ export async function clientBalanceCents(clientId: string): Promise<number> {
 }
 
 export async function resetAllData(): Promise<void> {
-  await db.transaction(
-    'rw',
-    db.clients,
-    db.products,
-    db.sales,
-    db.payments,
-    db.profile,
-    async () => {
+  await db.transaction('rw', [db.clients, db.products, db.sales, db.payments, db.profile, db.settings], async () => {
       await Promise.all([
         db.clients.clear(),
         db.products.clear(),
         db.sales.clear(),
         db.payments.clear(),
         db.profile.clear(),
+        db.settings.clear(),
       ])
-    },
-  )
+  })
 }
 
 export async function balancesByClient(): Promise<Map<string, number>> {

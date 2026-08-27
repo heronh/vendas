@@ -1,6 +1,6 @@
 # Controle de Vendas — app Android
 
-Aplicação implementada para Android (Capacitor). Os dados ficam no aparelho (offline-first). Internet só entra na busca de CEP e no compartilhamento de backup.
+Aplicação implementada para Android (Capacitor). Internet só entra na busca de CEP, no compartilhamento de backup e na sincronização com o host na rede Wi-Fi local (`../app-host`).
 
 Instruções comuns a todas as aplicações estão no [README da raiz](../README.md).
 

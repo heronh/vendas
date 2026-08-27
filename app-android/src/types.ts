@@ -69,6 +69,22 @@ export interface BackupPayload {
   profile: Profile | null
 }
 
+export interface ServerRegistration {
+  id: 'lan-server'
+  ssid: string
+  baseUrl: string
+  token: string
+  pairedAt: number
+}
+
+export interface WifiMemory {
+  id: 'lan-wifi'
+  ssid: string
+  savedAt: number
+}
+
+export type AppSetting = ServerRegistration | WifiMemory
+
 export type ReportPeriod = '30d' | 'month'
 
 export interface LedgerEntry {
