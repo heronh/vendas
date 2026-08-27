@@ -1,5 +1,5 @@
 import { MenuLink } from '../components/ui'
-import produtoIcon from '../../docs/produto.svg'
+import produtoIcon from '../../../docs/produto.svg'
 
 export function MenuScreen() {
   return (
