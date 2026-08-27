@@ -1,14 +1,5 @@
 node_modules
-dist
-.vite
-*.log
 .DS_Store
 .idea
 .vscode
-android/app/build
-android/.gradle
-android/local.properties
-android/captures
-android/*.iml
-android/app/*.iml
-android/.idea
+*.log
