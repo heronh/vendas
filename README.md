@@ -2,9 +2,15 @@
 
 Aplicativo de controle de vendas e gestão de clientes, feito para uso no celular com funcionamento **offline-first**. Os dados ficam no próprio aparelho; internet só entra na busca de CEP e no compartilhamento de backup.
 
-No **Android**, instale o APK e use sem computador. No **iOS**, por enquanto o app ainda abre pelo Safari com o computador (ou um site) servindo a página — gerar um arquivo para a App Store exige um Mac e conta de desenvolvedor Apple.
-
 Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
+
+Este repositório reúne três aplicações. Cada pasta tem um README com instruções específicas:
+
+| Pasta | Função | Estado |
+| --- | --- | --- |
+| [app-android](app-android/README.md) | Aplicativo Android (APK / Capacitor) | Implementado |
+| [app-ios](app-ios/README.md) | Aplicativo iPhone / iPad | Reservado (ainda sem código) |
+| [app-host](app-host/README.md) | Host de backup e sincronização | Reservado (ainda sem código) |
 
 ## O que o app faz
 
@@ -23,58 +29,27 @@ Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
 
 Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil como marca d’água.
 
-## Instalar no Android (sem computador)
+## Plataformas
 
-O arquivo pronto para instalar está em:
-
-`release/ControleDeVendas.apk`
-
-Depois de instalado, o app **não precisa do computador**. Ele abre pelo ícone **Controle de Vendas**, guarda clientes e vendas no celular e só usa internet para buscar CEP ou enviar backup.
-
-### Como instalar no celular
-
-1. Copie `ControleDeVendas.apk` para o Android (cabo USB, Google Drive, WhatsApp, e-mail, cartão SD, etc.).
-2. Abra o arquivo no celular (app **Arquivos** ou o próprio Drive/WhatsApp).
-3. Se o Android avisar que o app veio de uma fonte desconhecida: **Ajustes → Aplicativos → Acesso especial → Instalar apps desconhecidos** (o nome varia conforme a marca) e permita o Chrome, Drive ou Arquivos.
-4. Toque em **Instalar** e depois em **Abrir**.
-5. Na primeira leitura de código de barras, permita o uso da **câmera**.
-
-Requisitos: Android 7 ou superior. Este APK é de desenvolvimento (assinado em modo debug), adequado para uso interno da clínica. Não está na Play Store.
-
-### Gerar o APK de novo (no computador de desenvolvimento)
-
-Pré-requisitos: Node.js 22+, JDK 21 e Android SDK.
-
-```bash
-npm install
-export JAVA_HOME=/caminho/do/jdk-21
-export ANDROID_HOME=/caminho/do/Android/Sdk
-npm run android:apk
-```
-
-O arquivo atualizado sai em `release/ControleDeVendas.apk`.
+- **Android:** instale o APK em `app-android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [app-android/README.md](app-android/README.md).
+- **iOS:** ainda não há aplicativo nativo neste repositório. Gerar IPA exige Xcode em um Mac e conta Apple Developer. Enquanto isso, o fluxo web pode ser aberto no Safari (veja abaixo).
+- **Host:** o servidor de backup e sincronização ainda não foi implementado. Os dados continuam só no aparelho.
 
 ## Como executar no computador (desenvolvimento)
 
-Pré-requisito: Node.js 22+.
+Pré-requisito: Node.js 22+. Os comandos do app implementado ficam em `app-android`:
 
 ```bash
+cd app-android
 npm install
 npm run dev
 ```
 
 Abra `http://localhost:5173` no próprio computador.
 
-Para gerar só os arquivos web:
-
-```bash
-npm run build
-npm run preview
-```
-
 ## Android ou iOS pelo navegador (precisa de um servidor)
 
-Use isto só para testar na rede local, **sem instalar o APK**. O computador precisa permanecer ligado, com `npm run dev` (ou `npm run preview`) em execução.
+Use isto só para testar na rede local, **sem instalar o APK**. O computador precisa permanecer ligado, com `npm run dev` (ou `npm run preview`) em execução em `app-android`.
 
 1. Celular e computador na **mesma rede Wi-Fi** (não use o 4G/5G do telefone).
 2. No computador, anote o endereço **Network** (por exemplo `http://192.168.30.5:5173`).
@@ -84,8 +59,6 @@ Use isto só para testar na rede local, **sem instalar o APK**. O computador pre
 Se a página não abrir: confirme o Wi-Fi, desative VPN e libere a porta `5173` no firewall do computador. O IP muda se o computador reconectar à rede.
 
 No iPhone, a câmera (código de barras) costuma ser bloqueada em páginas `http://` da rede local. Digite o código manualmente. A foto do produto pela galeria continua disponível.
-
-Um aplicativo iOS independente (como o APK no Android) ainda não está neste repositório: a geração de IPA exige Xcode em um Mac e conta Apple Developer.
 
 ## Uso no dia a dia
 
@@ -100,12 +73,12 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 
 ## Dados e privacidade
 
-- Tudo é gravado localmente (IndexedDB / SQLite do navegador). Não há servidor de negócio.
+- Tudo é gravado localmente (IndexedDB / SQLite do navegador). Não há servidor de negócio ainda (`app-host` está reservado para isso).
 - O backup é um JSON legível com clientes, produtos, vendas, pagamentos e perfil.
 - A restauração **substitui** a base atual do aparelho.
 - A consulta de CEP usa a API pública [ViaCEP](https://viacep.com.br).
 
-## Stack
+## Stack (app Android)
 
 - React 18 + TypeScript + Vite
 - Capacitor 8 (APK Android)
@@ -114,13 +87,3 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 - ViaCEP (HTTP REST)
 
 O documento original de requisitos está em `docs/Prompt controle de vendas.txt`. As artes da marca estão em `docs/`.
-
-## Estrutura
-
-```
-src/             telas, banco local, CEP, backup e relatórios
-public/          logo e manifesto PWA
-android/         projeto nativo gerado pelo Capacitor
-release/         APK para instalar no celular (ControleDeVendas.apk)
-scripts/         build-apk.sh — gera o APK de novo
-```
