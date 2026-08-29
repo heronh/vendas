@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import { Button, Field, TextInput, Topbar } from '../components/ui'
+import { CLOUD_API_URL } from '../config'
 import { resetAllData } from '../db'
 import {
   backupFileName,
@@ -10,8 +11,7 @@ import {
   serializeBackup,
   shareBackupFile,
 } from '../services/backup'
-import { getServerRegistration, getSavedWifi, pairAndSync, saveLocalWifi } from '../services/lanSync'
-import { getLocalNetwork } from '../services/wifi'
+import { forgetServer, getServerRegistration, pairAndSync, syncNow } from '../services/lanSync'
 import type { ServerRegistration } from '../types'
 
 export function BackupScreen() {
@@ -21,8 +21,6 @@ export function BackupScreen() {
   const [resetOpen, setResetOpen] = useState(false)
   const [pairOpen, setPairOpen] = useState(false)
   const [code, setCode] = useState('')
-  const [wifiLabel, setWifiLabel] = useState('')
-  const [ipv4, setIpv4] = useState<string | null>(null)
   const [server, setServer] = useState<ServerRegistration | undefined>()
 
   async function refreshServer() {
@@ -92,39 +90,50 @@ export function BackupScreen() {
     }
   }
 
-  async function openPairing() {
+  async function confirmPair() {
     setError('')
-    setMessage('')
     setBusy(true)
     try {
-      const network = await getLocalNetwork()
-      await saveLocalWifi(network.ssid)
-      setWifiLabel(network.ssid)
-      setIpv4(network.ipv4)
+      const result = await pairAndSync(code)
+      setPairOpen(false)
       setCode('')
-      setPairOpen(true)
+      await refreshServer()
+      setMessage(
+        `Nuvem cadastrada. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
+          `${result.newProducts} produto(s) novo(s) no celular.`,
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível ler a rede Wi-Fi')
+      setError(err instanceof Error ? err.message : 'Falha ao cadastrar a nuvem')
     } finally {
       setBusy(false)
     }
   }
 
-  async function confirmPair() {
+  async function confirmSync() {
     setError('')
     setBusy(true)
     try {
-      const saved = await getSavedWifi()
-      const result = await pairAndSync(code, ipv4)
-      setPairOpen(false)
-      await refreshServer()
+      const result = await syncNow()
       setMessage(
-        `Servidor cadastrado na rede ${saved?.ssid || result.registration.ssid}. ` +
-          `Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
+        `Sincronizado. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
           `${result.newProducts} produto(s) novo(s) no celular.`,
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao cadastrar o servidor')
+      setError(err instanceof Error ? err.message : 'Falha ao sincronizar')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function confirmForget() {
+    setError('')
+    setBusy(true)
+    try {
+      await forgetServer()
+      await refreshServer()
+      setMessage('Celular desconectado da nuvem. Os dados locais foram mantidos.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível desconectar')
     } finally {
       setBusy(false)
     }
@@ -151,26 +160,52 @@ export function BackupScreen() {
     <main>
       <Topbar title="Backup e sincronização" backTo="/menu" />
       <p className={`server-status ${registered ? 'is-on' : 'is-off'}`}>
-        {registered ? 'Servidor cadastrado' : 'Nenhum servidor cadastrado'}
+        {registered ? 'Nuvem cadastrada' : 'Nenhuma nuvem cadastrada'}
       </p>
       {registered ? (
         <p className="muted" style={{ marginTop: 0 }}>
-          Rede {server?.ssid} · {server?.baseUrl}
+          HTTPS/JSON · {server?.baseUrl}
         </p>
-      ) : null}
+      ) : (
+        <p className="muted" style={{ marginTop: 0 }}>
+          API {CLOUD_API_URL}
+        </p>
+      )}
 
       {!registered ? (
         <section className="card stack">
-          <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na rede</h2>
+          <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na nuvem</h2>
           <p className="muted">
-            Cadastre o computador da mesma Wi-Fi para enviar clientes e lançamentos e receber
-            produtos que ainda não estão neste celular.
+            Cadastre este celular na API HTTPS para enviar clientes e lançamentos (JSON) e receber
+            produtos que ainda não estão neste aparelho.
           </p>
-          <Button variant="primary" onClick={() => void openPairing()} disabled={busy}>
-            Cadastrar servidor
+          <Button
+            variant="primary"
+            onClick={() => {
+              setError('')
+              setMessage('')
+              setCode('')
+              setPairOpen(true)
+            }}
+            disabled={busy}
+          >
+            Cadastrar nuvem
           </Button>
         </section>
-      ) : null}
+      ) : (
+        <section className="card stack">
+          <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Sincronização</h2>
+          <p className="muted">
+            Envia o cadastro local em JSON e baixa produtos novos do catálogo na nuvem.
+          </p>
+          <Button variant="primary" onClick={() => void confirmSync()} disabled={busy}>
+            Sincronizar agora
+          </Button>
+          <Button variant="ghost" onClick={() => void confirmForget()} disabled={busy}>
+            Desconectar nuvem
+          </Button>
+        </section>
+      )}
 
       <section className="card stack" style={{ marginTop: 14 }}>
         <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>
@@ -217,9 +252,9 @@ export function BackupScreen() {
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="pair-title">
           <div className="modal">
             <h2 id="pair-title" style={{ fontFamily: 'var(--serif)', marginTop: 0 }}>
-              Cadastrar servidor
+              Cadastrar nuvem
             </h2>
-            <p className="muted">Rede Wi-Fi salva: {wifiLabel || 'Wi-Fi local'}</p>
+            <p className="muted">Use o código de 6 dígitos da página do servidor na nuvem.</p>
             <Field label="Código do servidor">
               <TextInput
                 inputMode="numeric"
@@ -230,7 +265,7 @@ export function BackupScreen() {
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
               />
             </Field>
-            <p className="hint">Use o código de 6 dígitos exibido no computador.</p>
+            <p className="hint">A comunicação é HTTPS com JSON. Não precisa da mesma Wi-Fi.</p>
             <div className="stack" style={{ marginTop: 12 }}>
               <Button variant="primary" onClick={() => void confirmPair()} disabled={busy || code.length !== 6}>
                 Confirmar código

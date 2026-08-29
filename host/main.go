@@ -28,16 +28,16 @@ import (
 const defaultPort = 3847
 
 type Product struct {
-	ID              string  `json:"id"`
-	Description     string  `json:"description"`
-	Supplier        string  `json:"supplier"`
-	CostPriceCents  int64   `json:"costPriceCents"`
-	SalePriceCents  int64   `json:"salePriceCents"`
-	Barcode         string  `json:"barcode"`
-	ImageDataURL    *string `json:"imageDataUrl,omitempty"`
-	CreatedAt       int64   `json:"createdAt"`
-	UpdatedAt       int64   `json:"updatedAt"`
-	Source          string  `json:"source,omitempty"`
+	ID             string  `json:"id"`
+	Description    string  `json:"description"`
+	Supplier       string  `json:"supplier"`
+	CostPriceCents int64   `json:"costPriceCents"`
+	SalePriceCents int64   `json:"salePriceCents"`
+	Barcode        string  `json:"barcode"`
+	ImageDataURL   *string `json:"imageDataUrl,omitempty"`
+	CreatedAt      int64   `json:"createdAt"`
+	UpdatedAt      int64   `json:"updatedAt"`
+	Source         string  `json:"source,omitempty"`
 }
 
 type Client struct {
@@ -118,12 +118,21 @@ func main() {
 		log.Fatalf("migração: %v", err)
 	}
 
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(2)
+	db.SetConnMaxLifetime(30 * time.Minute)
+
+	pairing := env("PAIRING_CODE", "")
+	if pairing == "" {
+		pairing = sixDigitCode()
+	}
+
 	s := &server{
 		db:          db,
 		port:        port,
 		password:    password,
 		sessionKey:  sessionSecret(),
-		pairingCode: sixDigitCode(),
+		pairingCode: pairing,
 		tokens:      map[string]struct{}{},
 		loginTmpl:   template.Must(template.New("login").Parse(loginHTML)),
 		productsTmpl: template.Must(template.New("products").Funcs(template.FuncMap{
@@ -137,6 +146,8 @@ func main() {
 	mux.HandleFunc("/login", s.handleLogin)
 	mux.HandleFunc("/logout", s.handleLogout)
 	mux.HandleFunc("/products", s.handleProducts)
+	mux.HandleFunc("/healthz", s.handleHealth)
+	mux.HandleFunc("/health", s.handleHealth)
 	mux.HandleFunc("/api/discover", s.handleDiscover)
 	mux.HandleFunc("/api/pair", s.handlePair)
 	mux.HandleFunc("/api/sync", s.handleSync)
@@ -260,6 +271,7 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    s.sign("ok"),
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   isHTTPS(r),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   60 * 60 * 12,
 	})
@@ -313,13 +325,26 @@ func (s *server) handleProducts(w http.ResponseWriter, r *http.Request) {
 	_ = s.productsTmpl.Execute(w, map[string]any{
 		"Products":    products,
 		"PairingCode": s.pairingCode,
-		"Addresses":   lanURLs(s.port),
+		"Addresses":   s.connectHints(r),
 		"Error":       r.URL.Query().Get("erro") == "descricao",
 	})
 }
 
+func (s *server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if err := s.db.PingContext(r.Context()); err != nil {
+		http.Error(w, "database", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.WriteString(w, "ok")
+}
+
 func (s *server) handleDiscover(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"app": "vendas-beauty-brasil-host", "port": s.port})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"app":     "vendas-beauty-brasil-host",
+		"port":    s.port,
+		"baseUrl": requestBaseURL(r),
+	})
 }
 
 func (s *server) handlePair(w http.ResponseWriter, r *http.Request) {
@@ -728,6 +753,36 @@ func lanURLs(port int) []string {
 	return urls
 }
 
+func isHTTPS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+	return strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+}
+
+func requestBaseURL(r *http.Request) string {
+	if u := strings.TrimRight(env("PUBLIC_URL", ""), "/"); u != "" {
+		return u
+	}
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	proto := "http"
+	if isHTTPS(r) {
+		proto = "https"
+	}
+	return proto + "://" + host
+}
+
+func (s *server) connectHints(r *http.Request) []string {
+	base := requestBaseURL(r)
+	if strings.HasPrefix(base, "https://") {
+		return []string{base}
+	}
+	return lanURLs(s.port)
+}
+
 const loginHTML = `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -783,12 +838,12 @@ const productsHTML = `<!doctype html>
   <header>
     <div>
       <h1>Produtos</h1>
-      <p class="muted">Lista local e recebida dos celulares Android (iOS ainda sem app).</p>
+      <p class="muted">Lista local e recebida dos celulares Android via HTTPS/JSON (iOS ainda sem app).</p>
     </div>
     <a href="/logout">Sair</a>
   </header>
   <div class="panel">
-    <p class="muted">Código para cadastrar o celular na mesma Wi-Fi:</p>
+    <p class="muted">Código para cadastrar o celular (API HTTPS/JSON):</p>
     <div class="code">{{.PairingCode}}</div>
     {{range .Addresses}}<code>{{.}}</code><br>{{end}}
   </div>

@@ -38,7 +38,7 @@ export function MenuScreen() {
           to="/backup"
           icon="💾"
           title="Backup e sincronização"
-          subtitle="Servidor local, arquivo e restauração"
+          subtitle="Nuvem HTTPS, arquivo e restauração"
         />
         <MenuLink
           to="/perfil"
