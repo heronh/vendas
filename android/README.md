@@ -1,6 +1,6 @@
 # Controle de Vendas — app Android
 
-Aplicação implementada para Android (Capacitor). Internet só entra na busca de CEP, no compartilhamento de backup e na sincronização com o host na rede Wi-Fi local (`../app-host`).
+Aplicação implementada para Android (Capacitor). Internet só entra na busca de CEP, no compartilhamento de backup e na sincronização com o host na rede Wi-Fi local (`../host`).
 
 Instruções comuns a todas as aplicações estão no [README da raiz](../README.md).
 
@@ -23,7 +23,7 @@ Requisitos: Android 7 ou superior. APK de desenvolvimento (assinado em modo debu
 Pré-requisitos: Node.js 22+, JDK 21 e Android SDK.
 
 ```bash
-cd app-android
+cd android
 npm install
 npm run dev
 ```
@@ -40,13 +40,13 @@ npm run preview
 Gerar o APK:
 
 ```bash
-cd app-android
+cd android
 export JAVA_HOME=/caminho/do/jdk-21
 export ANDROID_HOME=/caminho/do/Android/Sdk
 npm run android:apk
 ```
 
-O arquivo sai em `app-android/release/ControleDeVendas.apk`.
+O arquivo sai em `android/release/ControleDeVendas.apk`.
 
 ## Estrutura
 

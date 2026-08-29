@@ -13,7 +13,7 @@ O aplicativo **Android** já cadastra este host (código de 6 dígitos). O **iOS
 ## Como executar
 
 ```bash
-cd app-host
+cd host
 docker compose up -d
 export HOST_PASSWORD='sua-senha'
 export DATABASE_URL='postgres://vendas:vendas@127.0.0.1:5432/vendas?sslmode=disable'

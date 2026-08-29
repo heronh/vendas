@@ -8,9 +8,9 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 
 | Pasta | Função | Estado |
 | --- | --- | --- |
-| [app-android](app-android/README.md) | Aplicativo Android (APK / Capacitor) | Implementado |
-| [app-ios](app-ios/README.md) | Aplicativo iPhone / iPad | Reservado (ainda sem código) |
-| [app-host](app-host/README.md) | Host Go + Postgres (senha, produtos, sync Wi-Fi) | Implementado |
+| [android](android/README.md) | Aplicativo Android (APK / Capacitor) | Implementado |
+| [ios](ios/README.md) | Aplicativo iPhone / iPad | Reservado (ainda sem código) |
+| [host](host/README.md) | Host Go + Postgres (senha, produtos, sync Wi-Fi) | Implementado |
 
 ## O que o app faz
 
@@ -31,16 +31,16 @@ Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil c
 
 ## Plataformas
 
-- **Android:** instale o APK em `app-android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [app-android/README.md](app-android/README.md).
+- **Android:** instale o APK em `android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [android/README.md](android/README.md).
 - **iOS:** ainda não há aplicativo nativo neste repositório. Gerar IPA exige Xcode em um Mac e conta Apple Developer. Enquanto isso, o fluxo web pode ser aberto no Safari (veja abaixo).
-- **Host:** Postgres via Docker e `go run .` em `app-host`. A página pede senha; o celular Android cadastra o servidor com o código de 6 dígitos. iOS ainda sem app. Veja [app-host/README.md](app-host/README.md).
+- **Host:** Postgres via Docker e `go run .` em `host`. A página pede senha; o celular Android cadastra o servidor com o código de 6 dígitos. iOS ainda sem app. Veja [host/README.md](host/README.md).
 
 ## Como executar no computador (desenvolvimento)
 
-Pré-requisito: Node.js 22+. Os comandos do app implementado ficam em `app-android`:
+Pré-requisito: Node.js 22+. Os comandos do app implementado ficam em `android`:
 
 ```bash
-cd app-android
+cd android
 npm install
 npm run dev
 ```
@@ -49,7 +49,7 @@ Abra `http://localhost:5173` no próprio computador.
 
 ## Android ou iOS pelo navegador (precisa de um servidor)
 
-Use isto só para testar na rede local, **sem instalar o APK**. O computador precisa permanecer ligado, com `npm run dev` (ou `npm run preview`) em execução em `app-android`.
+Use isto só para testar na rede local, **sem instalar o APK**. O computador precisa permanecer ligado, com `npm run dev` (ou `npm run preview`) em execução em `android`.
 
 1. Celular e computador na **mesma rede Wi-Fi** (não use o 4G/5G do telefone).
 2. No computador, anote o endereço **Network** (por exemplo `http://192.168.30.5:5173`).
@@ -73,7 +73,7 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 
 ## Dados e privacidade
 
-- No celular, os dados ficam localmente (IndexedDB / SQLite). O host em `app-host` guarda produtos (locais e sincronizados) e o backup enviado pelos aparelhos no Postgres.
+- No celular, os dados ficam localmente (IndexedDB / SQLite). O host em `host` guarda produtos (locais e sincronizados) e o backup enviado pelos aparelhos no Postgres.
 - O backup é um JSON legível com clientes, produtos, vendas, pagamentos e perfil.
 - A restauração **substitui** a base atual do aparelho.
 - A consulta de CEP usa a API pública [ViaCEP](https://viacep.com.br).
