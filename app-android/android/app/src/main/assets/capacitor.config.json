@@ -1,0 +1,11 @@
+{
+	"appId": "br.com.beautybrasil.vendas",
+	"appName": "Controle de Vendas",
+	"webDir": "dist",
+	"android": {
+		"allowMixedContent": true
+	},
+	"server": {
+		"androidScheme": "https"
+	}
+}

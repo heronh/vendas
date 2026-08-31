@@ -1,0 +1,14 @@
+{{template "head" .}}
+<div class="login-page">
+  <form method="post" action="/login">
+    <h1>Beauty Brasil SJC · Host</h1>
+    <p class="muted">Senha do <strong>admin</strong>. Não é a senha dos usuários do aplicativo móvel.</p>
+    {{if .Error}}<p class="err">Senha inválida.</p>{{end}}
+    <label class="field mt-4" for="password">Senha do admin</label>
+    <input class="field-input" id="password" name="password" type="password" required autofocus autocomplete="current-password" />
+    <button class="btn" type="submit">Entrar</button>
+    <p class="muted mt-4">Cada celular tem usuário e senha próprios, identificados pelo e-mail. Perda de senha do aplicativo se resolve em Administração, redefinindo para 000000 — não por aqui.</p>
+  </form>
+</div>
+</body>
+</html>

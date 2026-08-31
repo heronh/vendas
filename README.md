@@ -16,7 +16,8 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 
 | Tela | Função |
 | --- | --- |
-| Entrada | Logo em destaque e botão **Entrar**, sem senha (modo provisório) |
+| Entrada | Logo e senha do aplicativo. Senha inicial `000000` abre o **cadastro de usuário** (e-mail + senha) |
+| Cadastro | Nome, e-mail (identificador) e senha do aplicativo. Não é a senha do admin do host |
 | Menu | Acesso a cliente, produto, lista, relatórios, backup e perfil |
 | Cadastro de cliente | Nome, fantasia, empresa, telefone, e-mail e endereço com **Buscar CEP** (ViaCEP) |
 | Cadastro de produto | Descrição, fornecedor, custo, venda, código de barras/QR (digitado ou câmera) e foto |
@@ -33,7 +34,7 @@ Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil c
 
 - **Android:** instale o APK em `android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [android/README.md](android/README.md).
 - **iOS:** ainda não há aplicativo nativo neste repositório. Gerar IPA exige Xcode em um Mac e conta Apple Developer. Enquanto isso, o fluxo web pode ser aberto no Safari (veja abaixo).
-- **Host:** API no Cloud Run (Postgres no Cloud SQL) ou `go run .` em `host` para desenvolvimento. A página pede senha; o celular Android cadastra a nuvem com o código de 6 dígitos. iOS ainda sem app. Veja [host/README.md](host/README.md).
+- **Host:** API no Cloud Run (Postgres no Cloud SQL) ou `go run .` em `host` para desenvolvimento. A página pede a senha do **admin** (`000000` força a troca). Essa senha não é a dos usuários do aplicativo. O celular cadastra o usuário pelo e-mail e só sincroniza depois da liberação manual do admin. iOS ainda sem app. Veja [host/README.md](host/README.md).
 
 ## Como executar no computador (desenvolvimento)
 

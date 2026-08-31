@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clientes · Host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner"><a href="index.html">← mapa da sequência</a> · 05 / 10 · Clientes</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Clientes</h1>
+        <p class="muted">Visão de todos os celulares liberados. Sem cadastro e sem lançamento neste painel.</p>
+      </div>
+      <a href="01-login.html">Sair</a>
+    </header>
+    <nav class="tabs">
+      <a href="02-inicio.html">Início</a>
+      <a href="03-produtos.html">Produtos</a>
+      <a href="05-clientes.html" aria-current="page">Clientes</a>
+      <a href="07-relatorios.html">Relatórios</a>
+      <a href="09-administracao.html">Administração</a>
+    </nav>
+
+    <div class="callout callout-stop">
+      Somente visualização. Vendas e pagamentos são feitos no celular da profissional.
+    </div>
+
+    <div class="panel">
+      <form class="grid-form" action="05-clientes.html" method="get">
+        <div>
+          <label class="field" for="q">Buscar</label>
+          <input class="field-input" id="q" name="q" placeholder="Nome da cliente" />
+        </div>
+        <div>
+          <label class="field" for="device">Celular</label>
+          <select class="field-input" id="device" name="device">
+            <option>Todos os liberados</option>
+            <option>Moto G54 · Carla Mendes</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Filtrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Celular de origem</th>
+            <th>Saldo devedor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ana Paula Ribeiro</td>
+            <td>Moto G54 · Carla Mendes</td>
+            <td>R$ 450,00</td>
+            <td><a href="06-cliente.html">Ver ficha</a></td>
+          </tr>
+          <tr>
+            <td>Fernanda Lima</td>
+            <td>Moto G54 · Carla Mendes</td>
+            <td>R$ 0,00</td>
+            <td><a href="06-cliente.html">Ver ficha</a></td>
+          </tr>
+          <tr>
+            <td>Beatriz Souza</td>
+            <td>Moto G54 · Carla Mendes</td>
+            <td>R$ 180,00</td>
+            <td><a href="06-cliente.html">Ver ficha</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted mt-3">Aparelhos ainda não liberados (Maria Santos, Juliana Costa) não enviam clientes para esta lista.</p>
+    </div>
+  </div>
+</body>
+</html>

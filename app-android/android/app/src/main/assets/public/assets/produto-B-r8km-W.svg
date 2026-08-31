@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="500" height="900" viewBox="0 0 500 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Soft background gradient for white bottle body depth -->
+    <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0" />
+      <stop offset="12%" stop-color="#f8fafc" />
+      <stop offset="30%" stop-color="#ffffff" />
+      <stop offset="70%" stop-color="#ffffff" />
+      <stop offset="88%" stop-color="#f1f5f9" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+
+    <!-- Pump / Cap gradient -->
+    <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d1d5db" />
+      <stop offset="25%" stop-color="#ffffff" />
+      <stop offset="75%" stop-color="#f3f4f6" />
+      <stop offset="100%" stop-color="#9ca3af" />
+    </linearGradient>
+
+    <!-- Gradient for "Beauty" matching logo (Turquoise Cyan to Coral Orange) -->
+    <linearGradient id="beautyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="35%" stop-color="#22d3ee" />
+      <stop offset="70%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+
+    <!-- Solid/Gradient for "Brasil" (Turquoise Blue) -->
+    <linearGradient id="brasilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0891b2" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+
+    <!-- Sun & Wave Logo Gradient -->
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#fb923c" />
+    </linearGradient>
+
+    <!-- Clip Path for Bottle Shape -->
+    <clipPath id="bottleClip">
+      <rect x="100" y="210" width="300" height="570" rx="50" ry="50" />
+    </clipPath>
+
+    <!-- Drop shadow for bottle realism -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&amp;family=Montserrat:wght@700&amp;display=swap');
+
+    .bottle-body { fill: url(#bottleGrad); stroke: #cbd5e1; stroke-width: 1.5px; }
+    .cap-part { fill: url(#capGrad); stroke: #cbd5e1; stroke-width: 1px; }
+    
+    .stripe-teal { fill: #06b6d4; }
+    .stripe-light { fill: #67e8f9; }
+    .stripe-orange { fill: #f97316; }
+
+    .shadow-ellipse { fill: #000000; opacity: 0.08; }
+
+    .brand-text-beauty {
+      font-family: 'Comfortaa', 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 50px;
+      fill: url(#beautyGrad);
+      text-anchor: middle;
+    }
+
+    .brand-text-brasil {
+      font-family: 'Comfortaa', 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 50px;
+      fill: url(#brasilGrad);
+      text-anchor: middle;
+    }
+  </style>
+
+  <!-- Bottle Container -->
+  <g id="bottle" filter="url(#dropShadow)">
+    <!-- Base Shadow -->
+    <ellipse cx="250" cy="800" rx="150" ry="18" class="shadow-ellipse" />
+
+    <!-- Pump Dispenser Head -->
+    <path d="M 140,80 Q 190,65 250,65 L 250,95 Q 200,95 165,100 L 140,80 Z" class="cap-part" />
+    <rect x="225" y="95" width="50" height="70" rx="3" class="cap-part" />
+    <rect x="220" y="145" width="60" height="8" rx="2" class="cap-part" />
+    <rect x="215" y="160" width="70" height="25" rx="3" class="cap-part" />
+    <rect x="210" y="185" width="80" height="25" rx="4" class="cap-part" />
+
+    <!-- Main Bottle Body -->
+    <rect x="100" y="210" width="300" height="570" rx="50" ry="50" class="bottle-body" />
+
+    <!-- Group with Bottle Clip Path for bottom stripes -->
+    <g clip-path="url(#bottleClip)">
+      <rect x="100" y="725" width="300" height="15" class="stripe-teal" />
+      <rect x="100" y="740" width="300" height="15" class="stripe-light" />
+      <rect x="100" y="755" width="300" height="25" class="stripe-orange" />
+    </g>
+
+    <!-- Sun & Wave Logo Symbol (Matching Image closely) -->
+    <g transform="translate(250, 360) scale(1.15)">
+      <!-- Sun Rays -->
+      <line x1="0" y1="-60" x2="0" y2="-76" stroke="#f97316" stroke-width="5" stroke-linecap="round" />
+      <line x1="-22" y1="-55" x2="-32" y2="-70" stroke="#fb923c" stroke-width="5" stroke-linecap="round" />
+      <line x1="22" y1="-55" x2="32" y2="-70" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" />
+      <line x1="-42" y1="-40" x2="-56" y2="-52" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" />
+      <line x1="42" y1="-40" x2="56" y2="-52" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" />
+      <line x1="-54" y1="-18" x2="-70" y2="-20" stroke="#06b6d4" stroke-width="4.5" stroke-linecap="round" />
+      <line x1="54" y1="-18" x2="70" y2="-20" stroke="#ea580c" stroke-width="4.5" stroke-linecap="round" />
+
+      <!-- Sun Arc -->
+      <path d="M -48,-10 A 48,48 0 0,1 48,-10" fill="none" stroke="url(#sunGrad)" stroke-width="5.5" stroke-linecap="round" />
+
+      <!-- Waves -->
+      <path d="M -40,2 C -18,2 -8,-22 10,-22 C 24,-22 34,-8 42,2 C 28,14 8,22 -10,14 C -24,7 -32,2 -40,2 Z" fill="#06b6d4" />
+      <path d="M -22,14 C -8,14 2,-2 14,-2 C 22,-2 27,4 34,11 C 22,21 2,23 -12,19 Z" fill="#22d3ee" />
+    </g>
+
+    <!-- Brand Text "Beauty" & "Brasil" in Title Case (Maiúsculas e Minúsculas) -->
+    <text x="250" y="480" class="brand-text-beauty">Beauty</text>
+    <text x="250" y="545" class="brand-text-brasil">Brasil</text>
+  </g>
+</svg>

@@ -1,0 +1,33 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    <div class="panel">
+      <p class="muted">Código para cadastrar o celular (API HTTPS/JSON):</p>
+      <div class="code">{{.PairingCode}}</div>
+      {{range .Addresses}}<code>{{.}}</code><br>{{end}}
+      <p class="muted mt-3">O usuário aparece em Administração pelo e-mail, ainda sem liberação. Só sincroniza clientes, produtos e lançamentos depois que o admin libera.</p>
+    </div>
+
+    <div class="cards">
+      <a class="card" href="/administracao">
+        <strong>{{.PendingCount}} aguardando liberação</strong>
+        <span class="muted">{{if .PendingNames}}{{.PendingNames}}{{else}}Nenhum usuário na fila{{end}}</span>
+      </a>
+      <a class="card" href="/clientes">
+        <strong>{{.ClientCount}} clientes</strong>
+        <span class="muted">Somente leitura · origem: celulares liberados</span>
+      </a>
+      <a class="card" href="/relatorios">
+        <strong>{{.MonthSales}} no mês</strong>
+        <span class="muted">Relatório geral · também há corte por celular</span>
+      </a>
+      <a class="card" href="/produtos">
+        <strong>{{.ProductCount}} produtos</strong>
+        <span class="muted">Catálogo do host e dos aparelhos</span>
+      </a>
+    </div>
+</div>
+</body>
+</html>

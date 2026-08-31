@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prévia · sequencia do host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner">Prévia estática · sem Go, sem Postgres · Beauty Brasil SJC</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Sequência de páginas do host</h1>
+        <p class="muted">Mapa para análise antes de implementar no Go. Cada item abre a tela com dados fictícios.</p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <h2>Regras desta versão</h2>
+      <dl class="rules">
+        <dt>Senha do admin ≠ senha do aplicativo</dt>
+        <dd>O login desta pasta é só do admin. Cada celular tem usuário próprio, identificado pelo e-mail. O admin não usa a senha do aplicativo para entrar aqui.</dd>
+        <dt>Host só visualiza operação</dt>
+        <dd>O admin vê clientes, lançamentos e saldos dos usuários liberados. Não registra venda nem pagamento. Isso continua só no aparelho.</dd>
+        <dt>Perda de senha do aplicativo</dt>
+        <dd>Na administração, o admin redefine a senha daquele e-mail para <strong>000000</strong>. O celular abre o cadastro. Não altera a senha do admin.</dd>
+        <dt>Usuário nasce bloqueado</dt>
+        <dd>Após o pareamento, o e-mail fica <strong>aguardando liberação</strong>. Sync só depois da ação manual nesta página de administração.</dd>
+        <dt>Relatórios em dois cortes</dt>
+        <dd>Gerais (todos os celulares liberados) e por celular.</dd>
+      </dl>
+    </div>
+
+    <div class="panel map">
+      <h2>Ordem das telas</h2>
+      <ol>
+        <li>
+          <a href="01-login.html">01 · Login do admin</a>
+          <div class="muted">Senha do admin. Distinta da senha de cada usuário do aplicativo.</div>
+        </li>
+        <li>
+          <a href="02-inicio.html">02 · Início</a>
+          <div class="muted">Código de pareamento, atalhos e aparelhos aguardando liberação.</div>
+        </li>
+        <li>
+          <a href="03-produtos.html">03 · Produtos</a>
+          <div class="muted">Catálogo local e recebido dos celulares. Cadastro no host continua permitido.</div>
+        </li>
+        <li>
+          <a href="04-produto-form.html">04 · Novo produto</a>
+          <div class="muted">Formulário de catálogo (não é lançamento de venda).</div>
+        </li>
+        <li>
+          <a href="05-clientes.html">05 · Clientes</a>
+          <div class="muted">Todos os celulares. Somente leitura. Coluna indica o aparelho de origem.</div>
+        </li>
+        <li>
+          <a href="06-cliente.html">06 · Ficha do cliente</a>
+          <div class="muted">Saldo e histórico. Sem botão de lançar ou abater.</div>
+        </li>
+        <li>
+          <a href="07-relatorios.html">07 · Relatórios gerais</a>
+          <div class="muted">Totais e rankings de todos os celulares liberados.</div>
+        </li>
+        <li>
+          <a href="08-relatorios-celular.html">08 · Relatórios por celular</a>
+          <div class="muted">O mesmo conjunto de métricas, filtrado por aparelho.</div>
+        </li>
+        <li>
+          <a href="09-administracao.html">09 · Administração de usuários</a>
+          <div class="muted">Lista por e-mail, sem liberação por padrão, liberar, bloquear, redefinir senha.</div>
+        </li>
+        <li>
+          <a href="10-reset-senha.html">10 · Confirmar reset de senha</a>
+          <div class="muted">A senha daquele celular volta para 000000. A senha do host não muda.</div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</body>
+</html>

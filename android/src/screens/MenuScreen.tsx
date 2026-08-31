@@ -1,7 +1,23 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MenuLink } from '../components/ui'
+import { syncIfApproved } from '../services/lanSync'
 import produtoIcon from '../../../docs/produto.svg'
 
 export function MenuScreen() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    let cancelled = false
+    void syncIfApproved().then((result) => {
+      if (cancelled) return
+      if (result === 'reset') navigate('/cadastro', { replace: true })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [navigate])
+
   return (
     <main>
       <header className="topbar">
@@ -44,7 +60,7 @@ export function MenuScreen() {
           to="/perfil"
           icon="👤"
           title="Perfil"
-          subtitle="Dados da profissional / clínica"
+          subtitle="E-mail do usuário e dados da clínica"
         />
         <MenuLink
           to="/ajuda"

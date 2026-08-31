@@ -1,7 +1,9 @@
 import { ChangeEvent, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button, Field, TextInput, Topbar } from '../components/ui'
 import { CLOUD_API_URL } from '../config'
-import { resetAllData } from '../db'
+import { getOrCreateProfile, resetAllData } from '../db'
+import { isValidEmail, normalizeEmail, setUnlocked } from '../auth'
 import {
   backupFileName,
   downloadTextFile,
@@ -11,10 +13,18 @@ import {
   serializeBackup,
   shareBackupFile,
 } from '../services/backup'
-import { forgetServer, getServerRegistration, pairAndSync, syncNow } from '../services/lanSync'
+import {
+  describeSync,
+  fetchDeviceStatus,
+  forgetServer,
+  getServerRegistration,
+  pairAndSync,
+  syncNow,
+} from '../services/lanSync'
 import type { ServerRegistration } from '../types'
 
 export function BackupScreen() {
+  const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,14 +32,56 @@ export function BackupScreen() {
   const [pairOpen, setPairOpen] = useState(false)
   const [code, setCode] = useState('')
   const [server, setServer] = useState<ServerRegistration | undefined>()
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [userEmail, setUserEmail] = useState('')
 
   async function refreshServer() {
-    setServer(await getServerRegistration())
+    const [registration, profile, status] = await Promise.all([
+      getServerRegistration(),
+      getOrCreateProfile(),
+      fetchDeviceStatus(),
+    ])
+    setServer(registration)
+    setUserEmail(normalizeEmail(profile.email))
+    if (status) setEnabled(status.enabled)
+    else setEnabled(registration ? null : false)
+    return status
   }
 
   useEffect(() => {
     void refreshServer()
   }, [])
+
+  useEffect(() => {
+    if (!server || enabled !== false) return
+    const timer = window.setInterval(() => {
+      void (async () => {
+        const status = await fetchDeviceStatus()
+        if (!status) return
+        if (status.passwordReset) {
+          navigate('/cadastro', { replace: true })
+          return
+        }
+        if (status.enabled) {
+          setEnabled(true)
+          setBusy(true)
+          try {
+            const result = await syncNow()
+            if (result.passwordReset) {
+              navigate('/cadastro', { replace: true })
+              return
+            }
+            setMessage(`Liberado pelo admin. ${describeSync(result)}`)
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Falha ao sincronizar após a liberação')
+          } finally {
+            setBusy(false)
+          }
+        }
+      })()
+    }, 8000)
+    return () => window.clearInterval(timer)
+  }, [server, enabled, navigate])
 
   async function generate() {
     setError('')
@@ -92,16 +144,29 @@ export function BackupScreen() {
 
   async function confirmPair() {
     setError('')
+    if (!isValidEmail(userEmail)) {
+      setError('Conclua o cadastro com um e-mail válido. Ele identifica o usuário para o admin.')
+      return
+    }
     setBusy(true)
     try {
       const result = await pairAndSync(code)
       setPairOpen(false)
       setCode('')
       await refreshServer()
-      setMessage(
-        `Nuvem cadastrada. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
-          `${result.newProducts} produto(s) novo(s) no celular.`,
-      )
+      if (result.passwordReset) {
+        navigate('/cadastro', { replace: true })
+        return
+      }
+      if (result.pending) {
+        setEnabled(false)
+        setMessage(
+          `Nuvem cadastrada para ${userEmail}. O admin precisa liberar este e-mail antes do sincronismo.`,
+        )
+        return
+      }
+      setEnabled(true)
+      setMessage(`Nuvem cadastrada e liberada. ${describeSync(result)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao cadastrar a nuvem')
     } finally {
@@ -114,10 +179,12 @@ export function BackupScreen() {
     setBusy(true)
     try {
       const result = await syncNow()
-      setMessage(
-        `Sincronizado. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
-          `${result.newProducts} produto(s) novo(s) no celular.`,
-      )
+      if (result.passwordReset) {
+        navigate('/cadastro', { replace: true })
+        return
+      }
+      setEnabled(true)
+      setMessage(describeSync(result))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao sincronizar')
     } finally {
@@ -131,6 +198,7 @@ export function BackupScreen() {
     try {
       await forgetServer()
       await refreshServer()
+      setEnabled(false)
       setMessage('Celular desconectado da nuvem. Os dados locais foram mantidos.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível desconectar')
@@ -144,9 +212,11 @@ export function BackupScreen() {
     setBusy(true)
     try {
       await resetAllData()
-      setResetOpen(false)
       setServer(undefined)
-      setMessage('Configurações restauradas. Todos os dados foram apagados.')
+      setEnabled(false)
+      setUnlocked(false)
+      setResetOpen(false)
+      navigate('/cadastro', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível apagar os dados')
     } finally {
@@ -155,13 +225,29 @@ export function BackupScreen() {
   }
 
   const registered = Boolean(server)
+  const pending = registered && enabled === false
 
   return (
     <main>
       <Topbar title="Backup e sincronização" backTo="/menu" />
-      <p className={`server-status ${registered ? 'is-on' : 'is-off'}`}>
-        {registered ? 'Nuvem cadastrada' : 'Nenhuma nuvem cadastrada'}
+      <p className={`server-status ${registered && enabled ? 'is-on' : registered ? 'is-off' : 'is-off'}`}>
+        {!registered
+          ? 'Nenhuma nuvem cadastrada'
+          : pending
+            ? 'Aguardando liberação do admin'
+            : enabled
+              ? 'Nuvem liberada'
+              : 'Nuvem cadastrada'}
       </p>
+      {userEmail ? (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Usuário do aplicativo: {userEmail}
+        </p>
+      ) : (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Sem e-mail no cadastro. O admin identifica o usuário pelo e-mail.
+        </p>
+      )}
       {registered ? (
         <p className="muted" style={{ marginTop: 0 }}>
           HTTPS/JSON · {server?.baseUrl}
@@ -176,8 +262,8 @@ export function BackupScreen() {
         <section className="card stack">
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na nuvem</h2>
           <p className="muted">
-            Cadastre este celular na API HTTPS para enviar clientes e lançamentos (JSON) e receber
-            produtos que ainda não estão neste aparelho.
+            Cadastre este celular na API. O admin libera o e-mail manualmente. Só então o aplicativo
+            sincroniza: o catálogo de produtos é comum; clientes e lançamentos são só deste usuário.
           </p>
           <Button
             variant="primary"
@@ -195,10 +281,18 @@ export function BackupScreen() {
       ) : (
         <section className="card stack">
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Sincronização</h2>
+          {pending ? (
+            <p className="muted">
+              Este e-mail está na fila do admin. Depois da liberação, o aplicativo envia e recebe
+              clientes, produtos e lançamentos automaticamente.
+            </p>
+          ) : (
           <p className="muted">
-            Envia o cadastro local em JSON e baixa produtos novos do catálogo na nuvem.
+            O catálogo de produtos é comum a todos os usuários e ao admin. Clientes, vendas e
+            pagamentos ficam só neste e-mail.
           </p>
-          <Button variant="primary" onClick={() => void confirmSync()} disabled={busy}>
+          )}
+          <Button variant="primary" onClick={() => void confirmSync()} disabled={busy || pending}>
             Sincronizar agora
           </Button>
           <Button variant="ghost" onClick={() => void confirmForget()} disabled={busy}>
@@ -254,7 +348,10 @@ export function BackupScreen() {
             <h2 id="pair-title" style={{ fontFamily: 'var(--serif)', marginTop: 0 }}>
               Cadastrar nuvem
             </h2>
-            <p className="muted">Use o código de 6 dígitos da página do servidor na nuvem.</p>
+            <p className="muted">
+              Use o código de 6 dígitos da página do admin. O e-mail {userEmail || 'deste cadastro'}{' '}
+              identifica o usuário. A sincronização só começa depois da liberação manual.
+            </p>
             <Field label="Código do servidor">
               <TextInput
                 inputMode="numeric"

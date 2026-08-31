@@ -124,6 +124,24 @@ a {
   padding-top: 32px;
 }
 
+.splash-login {
+  text-align: left;
+  display: grid;
+  gap: 12px;
+}
+
+.callout-warn {
+  margin: 0 0 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(122, 90, 32, 0.35);
+  border-left: 3px solid #7a5a20;
+  background: #fff8e6;
+  color: #5c4318;
+  text-align: left;
+  border-radius: 12px;
+  font-size: 0.92rem;
+}
+
 .topbar {
   display: flex;
   align-items: center;

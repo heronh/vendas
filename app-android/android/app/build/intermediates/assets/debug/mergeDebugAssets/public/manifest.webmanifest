@@ -1,0 +1,18 @@
+{
+  "name": "Controle de Vendas — Beauty Brasil SJC",
+  "short_name": "Vendas",
+  "description": "Gestão offline de clientes, produtos, vendas e pagamentos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4EFE6",
+  "theme_color": "#1E2A3A",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

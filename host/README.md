@@ -4,7 +4,7 @@ Servidor do catálogo e da sincronização: autenticação por senha na página,
 
 Em produção a API roda no **Cloud Run** (projeto GCP `beautysales`) com **Cloud SQL**. No computador, o mesmo binário sobe com Docker + Postgres local.
 
-O aplicativo **Android** cadastra a nuvem com o código de 6 dígitos. O **iOS** ainda não tem app; a API (`/api/discover`, `/api/pair`, `/api/sync`) fica pronta para o mesmo fluxo.
+O aplicativo **Android** cadastra o usuário pelo e-mail e a nuvem com o código de 6 dígitos. O **iOS** ainda não tem app; a API (`/api/discover`, `/api/pair`, `/api/sync`, `/api/device`) fica pronta para o mesmo fluxo.
 
 ## Produção (Cloud Run)
 
@@ -21,6 +21,8 @@ gcloud secrets versions access latest --secret=vendas-pairing-code
 gcloud secrets versions access latest --secret=vendas-host-password
 ```
 
+A senha inicial do **admin** vem de `HOST_PASSWORD`. Depois da primeira troca na página `/senha`, o hash fica no Postgres (`host_settings`) e passa a valer no lugar do secret. Essa senha não é a dos usuários do aplicativo móvel.
+
 ## Desenvolvimento local
 
 Pré-requisitos: Go 1.22+, Docker.
@@ -28,19 +30,44 @@ Pré-requisitos: Go 1.22+, Docker.
 ```bash
 cd host
 docker compose up -d
-export HOST_PASSWORD='sua-senha'
+export HOST_PASSWORD='000000'
 export DATABASE_URL='postgres://vendas:vendas@127.0.0.1:5432/vendas?sslmode=disable'
 go run .
 ```
 
-Abra `http://127.0.0.1:3847`. Variáveis opcionais: `PORT` (padrão `3847`), `SESSION_SECRET`, `PAIRING_CODE` (se vazio, um código novo é gerado a cada processo).
+Abra `http://127.0.0.1:3847`. Com senha `000000`, o login do admin cai na tela de troca com um alerta. Variáveis opcionais: `PORT` (padrão `3847`), `SESSION_SECRET`, `PAIRING_CODE` (se vazio, um código novo é gerado a cada processo).
+
+## Páginas do admin
+
+| Rota | Função |
+| --- | --- |
+| `/login` | Senha do admin (não é a senha dos usuários do aplicativo) |
+| `/senha` | Troca da senha do admin. Obrigatória quando a senha atual é `000000` |
+| `/` | Início: código de pareamento e atalhos |
+| `/produtos` | Catálogo (cadastro no servidor não é lançamento) |
+| `/clientes` | Clientes dos usuários **liberados**, só leitura |
+| `/relatorios` | Totais e rankings gerais |
+| `/relatorios/celular` | Mesmas métricas por usuário/aparelho |
+| `/administracao` | Liberar, bloquear e redefinir senha do aplicativo para `000000` |
+
+O host não registra venda nem pagamento. A liberação do sincronismo é **manual** e feita pelo admin. O identificador do usuário do aplicativo é o **e-mail**.
+
+## API dos celulares
+
+| Rota | Função |
+| --- | --- |
+| `GET /api/discover` | Identificação da API |
+| `POST /api/pair` | Cadastra o usuário pelo e-mail com `enabled=false` e devolve o token |
+| `GET/POST /api/device` | Situação (`enabled`, `passwordReset`, `email`) e aviso de senha trocada |
+| `POST /api/sync` | Envia e recebe clientes, produtos, vendas e pagamentos. Só com usuário liberado |
 
 ## O que fica no banco
 
 | Tabela | Origem |
 | --- | --- |
-| `products` | Criados na página (`source = local`) ou enviados pelos celulares (`source = phone`) |
-| `clients`, `sales`, `payments` | Backup recebido na sincronização |
-| `device_tokens` | Tokens após o pareamento |
+| `products` | Catálogo **comum**: admin e todos os celulares liberados lêem e incluem itens novos |
+| `clients`, `sales`, `payments` | Só do usuário do aplicativo (`device_id`). O admin vê, mas um celular não recebe os de outro |
+| `devices` | Pareamento por e-mail, `enabled` (padrão false) e flag de reset de senha |
+| `host_settings` | Hash da senha do admin |
 
-Na sincronização o servidor devolve o catálogo completo de produtos; o celular importa os que ainda não tem.
+Na sincronização o servidor devolve o catálogo **completo** de produtos (tabela comum) e só os clientes, vendas e pagamentos daquele e-mail. O celular importa produtos novos ou atualizados e não recebe lançamentos de outros usuários.

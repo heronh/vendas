@@ -83,7 +83,13 @@ export interface WifiMemory {
   savedAt: number
 }
 
-export type AppSetting = ServerRegistration | WifiMemory
+export interface AppLock {
+  id: 'app-lock'
+  passwordHash: string
+  updatedAt: number
+}
+
+export type AppSetting = ServerRegistration | WifiMemory | AppLock
 
 export type ReportPeriod = '30d' | 'month'
 

@@ -2,6 +2,8 @@
 
 Aplicação implementada para Android (Capacitor). Internet entra na busca de CEP, no compartilhamento de backup e na sincronização HTTPS/JSON com a API (`../host` no Cloud Run).
 
+O usuário do aplicativo **não** é o admin do host. Senhas são independentes. Na primeira abertura (e sempre que a senha local for **000000**), o app abre o **cadastro de usuário**. O identificador é o **e-mail**. Sincronizar com a nuvem só depois da liberação manual do admin.
+
 Instruções comuns a todas as aplicações estão no [README da raiz](../README.md).
 
 ## Instalar no Android (sem computador)
@@ -33,6 +35,7 @@ Abra `http://localhost:5173`.
 Build web:
 
 ```bash
+cd android
 npm run build
 npm run preview
 ```

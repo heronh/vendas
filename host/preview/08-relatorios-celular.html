@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatórios por celular · Host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner"><a href="index.html">← mapa da sequência</a> · 08 / 10 · Relatórios por celular</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Relatórios por celular</h1>
+        <p class="muted">Mesmas métricas do relatório geral, cortadas por aparelho liberado.</p>
+      </div>
+      <a href="01-login.html">Sair</a>
+    </header>
+    <nav class="tabs">
+      <a href="02-inicio.html">Início</a>
+      <a href="03-produtos.html">Produtos</a>
+      <a href="05-clientes.html">Clientes</a>
+      <a href="07-relatorios.html" aria-current="page">Relatórios</a>
+      <a href="09-administracao.html">Administração</a>
+    </nav>
+
+    <p class="btn-row mt-0 mb-4">
+      <a class="btn btn-ghost" href="07-relatorios.html">Gerais</a>
+      <a class="btn" href="08-relatorios-celular.html">Por celular</a>
+    </p>
+
+    <div class="panel">
+      <form class="grid-form" action="08-relatorios-celular.html" method="get">
+        <div>
+          <label class="field" for="device">Celular</label>
+          <select class="field-input" id="device" name="device">
+            <option selected>Moto G54 · Carla Mendes · ativo</option>
+            <option disabled>Galaxy A54 · Maria Santos · aguardando liberação</option>
+            <option disabled>Galaxy A15 · Juliana Costa · aguardando liberação</option>
+          </select>
+        </div>
+        <div>
+          <label class="field" for="periodo">Período</label>
+          <select class="field-input" id="periodo" name="periodo">
+            <option>Mês corrente</option>
+            <option>Últimos 30 dias</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Atualizar</button>
+        </div>
+      </form>
+      <p class="muted mt-3">Aparelhos com enabled=false aparecem desabilitados até a Administração liberar.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <strong>Vendas neste celular</strong>
+        <span>R$ 12.480,00</span>
+        <span class="muted">Carla Mendes · ago/2026</span>
+      </div>
+      <div class="card">
+        <strong>Recebimentos</strong>
+        <span>R$ 9.210,00</span>
+      </div>
+      <div class="card">
+        <strong>Saldo em aberto</strong>
+        <span>R$ 3.270,00</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ranking neste aparelho</h2>
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Compras no período</th><th>Saldo atual</th></tr></thead>
+        <tbody>
+          <tr><td>Ana Paula Ribeiro</td><td>R$ 830,00</td><td>R$ 450,00</td></tr>
+          <tr><td>Beatriz Souza</td><td>R$ 360,00</td><td>R$ 180,00</td></tr>
+          <tr><td>Fernanda Lima</td><td>R$ 220,00</td><td>R$ 0,00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
