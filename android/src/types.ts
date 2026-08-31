@@ -83,13 +83,19 @@ export interface WifiMemory {
   savedAt: number
 }
 
+export interface SyncNetworkSetting {
+  id: 'sync-network'
+  allowMobileData: boolean
+  updatedAt: number
+}
+
 export interface AppLock {
   id: 'app-lock'
   passwordHash: string
   updatedAt: number
 }
 
-export type AppSetting = ServerRegistration | WifiMemory | AppLock
+export type AppSetting = ServerRegistration | WifiMemory | SyncNetworkSetting | AppLock
 
 export type ReportPeriod = '30d' | 'month'
 

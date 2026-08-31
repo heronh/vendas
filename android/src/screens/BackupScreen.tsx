@@ -17,8 +17,11 @@ import {
   describeSync,
   fetchDeviceStatus,
   forgetServer,
+  getAllowMobileData,
   getServerRegistration,
   pairAndSync,
+  setAllowMobileData,
+  syncAllowedOnCurrentNetwork,
   syncNow,
 } from '../services/lanSync'
 import type { ServerRegistration } from '../types'
@@ -34,15 +37,18 @@ export function BackupScreen() {
   const [server, setServer] = useState<ServerRegistration | undefined>()
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [userEmail, setUserEmail] = useState('')
+  const [allowMobile, setAllowMobile] = useState(false)
 
   async function refreshServer() {
-    const [registration, profile, status] = await Promise.all([
+    const [registration, profile, status, mobile] = await Promise.all([
       getServerRegistration(),
       getOrCreateProfile(),
       fetchDeviceStatus(),
+      getAllowMobileData(),
     ])
     setServer(registration)
     setUserEmail(normalizeEmail(profile.email))
+    setAllowMobile(mobile)
     if (status) setEnabled(status.enabled)
     else setEnabled(registration ? null : false)
     return status
@@ -64,6 +70,11 @@ export function BackupScreen() {
         }
         if (status.enabled) {
           setEnabled(true)
+          const network = await syncAllowedOnCurrentNetwork()
+          if (!network.ok) {
+            setMessage('Liberado pelo admin. A sincronização espera o Wi-Fi (ou permita dados móveis abaixo).')
+            return
+          }
           setBusy(true)
           try {
             const result = await syncNow()
@@ -165,6 +176,13 @@ export function BackupScreen() {
         )
         return
       }
+      if (result.deferred) {
+        setEnabled(true)
+        setMessage(
+          `Nuvem cadastrada e liberada. A sincronização espera o Wi-Fi (ou permita dados móveis nesta tela).`,
+        )
+        return
+      }
       setEnabled(true)
       setMessage(`Nuvem cadastrada e liberada. ${describeSync(result)}`)
     } catch (err) {
@@ -189,6 +207,21 @@ export function BackupScreen() {
       setError(err instanceof Error ? err.message : 'Falha ao sincronizar')
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function changeSyncNetwork(allow: boolean) {
+    setAllowMobile(allow)
+    setError('')
+    try {
+      await setAllowMobileData(allow)
+      setMessage(
+        allow
+          ? 'Sincronização permitida no Wi-Fi e nos dados móveis.'
+          : 'Sincronização só no Wi-Fi. Fora da rede, o aplicativo continua com os dados deste aparelho.',
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar a preferência de rede')
     }
   }
 
@@ -258,8 +291,42 @@ export function BackupScreen() {
         </p>
       )}
 
+      <section className="card stack">
+        <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Rede para sincronizar</h2>
+        <p className="muted">
+          Clientes, produtos e lançamentos ficam neste aparelho mesmo sem internet. A nuvem só é
+          usada na rede que você escolher.
+        </p>
+        <div className="choice-list" role="radiogroup" aria-label="Rede para sincronizar">
+          <label className={`choice ${!allowMobile ? 'is-on' : ''}`}>
+            <input
+              type="radio"
+              name="sync-network"
+              checked={!allowMobile}
+              onChange={() => void changeSyncNetwork(false)}
+            />
+            <span>
+              Somente Wi-Fi
+              <small>Não usa o pacote de dados móveis</small>
+            </span>
+          </label>
+          <label className={`choice ${allowMobile ? 'is-on' : ''}`}>
+            <input
+              type="radio"
+              name="sync-network"
+              checked={allowMobile}
+              onChange={() => void changeSyncNetwork(true)}
+            />
+            <span>
+              Wi-Fi e dados móveis
+              <small>Sincroniza também pelo 4G/5G</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
       {!registered ? (
-        <section className="card stack">
+        <section className="card stack" style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na nuvem</h2>
           <p className="muted">
             Cadastre este celular na API. O admin libera o e-mail manualmente. Só então o aplicativo
@@ -279,7 +346,7 @@ export function BackupScreen() {
           </Button>
         </section>
       ) : (
-        <section className="card stack">
+        <section className="card stack" style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Sincronização</h2>
           {pending ? (
             <p className="muted">

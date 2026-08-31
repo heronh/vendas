@@ -31,7 +31,10 @@ type server struct {
 
 func main() {
 	ctx := context.Background()
-	dsn := env("DATABASE_URL", "postgres://vendas:vendas@127.0.0.1:5432/vendas?sslmode=disable")
+	dsn := env("DATABASE_URL", "")
+	if dsn == "" {
+		log.Fatal("defina DATABASE_URL com o Postgres remoto (Cloud SQL). O host não usa banco local.")
+	}
 	password := env("HOST_PASSWORD", defaultPassword)
 	port := envInt("PORT", defaultPort)
 

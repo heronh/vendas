@@ -1,6 +1,6 @@
 # Controle de Vendas — Beauty Brasil SJC
 
-Aplicativo de controle de vendas e gestão de clientes, feito para uso no celular com funcionamento **offline-first**. Os dados ficam no próprio aparelho; internet só entra na busca de CEP e no compartilhamento de backup.
+Aplicativo de controle de vendas e gestão de clientes, feito para uso no celular com funcionamento **offline-first**. Clientes, produtos e lançamentos ficam no próprio aparelho. A internet entra na busca de CEP, no backup e na sincronização com a nuvem (Wi-Fi só, ou também dados móveis).
 
 Marca: **Beauty Brasil SJC · Estética e Bem-Estar** (São José dos Campos).
 
@@ -10,7 +10,7 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 | --- | --- | --- |
 | [android](android/README.md) | Aplicativo Android (APK / Capacitor) | Implementado |
 | [ios](ios/README.md) | Aplicativo iPhone / iPad | Reservado (ainda sem código) |
-| [host](host/README.md) | API Go + Postgres (Cloud Run / local) | Implementado |
+| [host](host/README.md) | API Go + Postgres remoto (Cloud Run / Cloud SQL) | Implementado |
 
 ## O que o app faz
 
@@ -25,7 +25,7 @@ Este repositório reúne três aplicações. Cada pasta tem um README com instru
 | Lançamentos | Autocomplete de produto, scanner, quantidade, valor unitário editável e data/hora |
 | Conta corrente | Saldo devedor (vendas − pagamentos), registro de abates e histórico unificado |
 | Relatórios | Filtros *mês corrente* e *últimos 30 dias*, totais e rankings |
-| Backup | Exportar JSON, cadastrar a nuvem HTTPS e restaurar em outro aparelho |
+| Backup | Exportar JSON, cadastrar a nuvem HTTPS, escolher Wi-Fi ou dados móveis e restaurar em outro aparelho |
 | Perfil | Dados da profissional/clínica neste dispositivo |
 
 Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil como marca d’água.
@@ -34,7 +34,7 @@ Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil c
 
 - **Android:** instale o APK em `android/release/ControleDeVendas.apk`. Depois de instalado, o app **não precisa do computador**. Veja [android/README.md](android/README.md).
 - **iOS:** ainda não há aplicativo nativo neste repositório. Gerar IPA exige Xcode em um Mac e conta Apple Developer. Enquanto isso, o fluxo web pode ser aberto no Safari (veja abaixo).
-- **Host:** API no Cloud Run (Postgres no Cloud SQL) ou `go run .` em `host` para desenvolvimento. A página pede a senha do **admin** (`000000` força a troca). Essa senha não é a dos usuários do aplicativo. O celular cadastra o usuário pelo e-mail e só sincroniza depois da liberação manual do admin. iOS ainda sem app. Veja [host/README.md](host/README.md).
+- **Host:** API no Cloud Run com Postgres no **Cloud SQL**. `go run .` em `host` também usa esse banco remoto (`DATABASE_URL`). A página pede a senha do **admin** (`000000` força a troca). Essa senha não é a dos usuários do aplicativo. O celular cadastra o usuário pelo e-mail e só sincroniza depois da liberação manual do admin. iOS ainda sem app. Veja [host/README.md](host/README.md).
 
 ## Como executar no computador (desenvolvimento)
 
@@ -74,7 +74,8 @@ Saldo devedor = total de vendas do cliente − total de pagamentos. Os rankings 
 
 ## Dados e privacidade
 
-- No celular, os dados ficam localmente (IndexedDB / SQLite). A API em `host` (Cloud Run ou Postgres local) guarda produtos e o backup enviado pelos aparelhos.
+- No celular, os dados de trabalho ficam localmente (IndexedDB / Dexie). Sem rede o aplicativo continua operando. A API em `host` usa o Postgres **remoto** (Cloud SQL).
+- Em **Backup**, escolha sincronizar **somente no Wi-Fi** ou também pelos **dados móveis**.
 - O backup é um JSON legível com clientes, produtos, vendas, pagamentos e perfil.
 - A restauração **substitui** a base atual do aparelho.
 - A sincronização com a nuvem usa **HTTPS** e JSON (`/api/pair`, `/api/sync`).

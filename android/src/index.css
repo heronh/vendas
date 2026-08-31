@@ -383,6 +383,45 @@ a {
   color: var(--muted);
 }
 
+.choice-list {
+  display: grid;
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.choice.is-on {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(176, 141, 62, 0.18);
+}
+
+.choice input {
+  width: auto;
+  min-height: 0;
+  margin-top: 4px;
+}
+
+.choice span {
+  display: grid;
+  gap: 2px;
+  font-size: 0.95rem;
+}
+
+.choice small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .search-input {
   margin-bottom: 12px;
 }

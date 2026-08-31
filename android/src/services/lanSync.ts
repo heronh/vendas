@@ -1,16 +1,51 @@
 import { DEFAULT_PASSWORD, isDefaultPassword, isValidEmail, normalizeEmail, setPassword } from '../auth'
 import { CLOUD_API_URL } from '../config'
 import { db, getOrCreateProfile } from '../db'
-import type { Client, Payment, Product, Sale, ServerRegistration } from '../types'
+import type { Client, Payment, Product, Sale, ServerRegistration, SyncNetworkSetting } from '../types'
+import { getNetworkTransport } from './wifi'
 
 export const SERVER_SETTINGS_ID = 'lan-server'
 export const WIFI_SETTINGS_ID = 'lan-wifi'
+export const SYNC_NETWORK_ID = 'sync-network'
 
 export class DevicePendingError extends Error {
   constructor() {
     super('Aguardando liberação do admin no host')
     this.name = 'DevicePendingError'
   }
+}
+
+export async function getAllowMobileData(): Promise<boolean> {
+  const row = await db.settings.get(SYNC_NETWORK_ID)
+  return row?.id === 'sync-network' ? row.allowMobileData : false
+}
+
+export async function setAllowMobileData(allow: boolean): Promise<void> {
+  const setting: SyncNetworkSetting = {
+    id: SYNC_NETWORK_ID,
+    allowMobileData: allow,
+    updatedAt: Date.now(),
+  }
+  await db.settings.put(setting)
+}
+
+export async function syncAllowedOnCurrentNetwork(): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const transport = await getNetworkTransport()
+  if (transport === 'none') {
+    return { ok: false, reason: 'Sem internet. Os dados continuam neste aparelho até haver rede.' }
+  }
+  if (transport === 'cellular' && !(await getAllowMobileData())) {
+    return {
+      ok: false,
+      reason: 'Sincronização só no Wi-Fi. Conecte-se a uma rede Wi-Fi ou permita dados móveis em Backup.',
+    }
+  }
+  return { ok: true }
+}
+
+async function assertSyncNetwork(): Promise<void> {
+  const check = await syncAllowedOnCurrentNetwork()
+  if (!check.ok) throw new Error(check.reason)
 }
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs: number): Promise<unknown> {
@@ -252,6 +287,7 @@ export type SyncResult = {
   newProducts: number
   newLedger: number
   pending: boolean
+  deferred: boolean
   passwordReset: boolean
 }
 
@@ -319,6 +355,23 @@ export async function pairAndSync(code: string): Promise<SyncResult> {
       newProducts: 0,
       newLedger: 0,
       pending: true,
+      deferred: false,
+      passwordReset: false,
+    }
+  }
+
+  const network = await syncAllowedOnCurrentNetwork()
+  if (!network.ok) {
+    return {
+      registration,
+      sentClients: sent.clients,
+      sentLedger: sent.ledger,
+      sentProducts: sent.products,
+      newClients: 0,
+      newProducts: 0,
+      newLedger: 0,
+      pending: false,
+      deferred: true,
       passwordReset: false,
     }
   }
@@ -335,6 +388,7 @@ export async function pairAndSync(code: string): Promise<SyncResult> {
       newProducts: incoming.products.length,
       newLedger: incoming.sales.length + incoming.payments.length,
       pending: false,
+      deferred: false,
       passwordReset: incoming.passwordReset,
     }
   } catch (err) {
@@ -348,6 +402,7 @@ export async function pairAndSync(code: string): Promise<SyncResult> {
         newProducts: 0,
         newLedger: 0,
         pending: true,
+        deferred: false,
         passwordReset: false,
       }
     }
@@ -355,7 +410,8 @@ export async function pairAndSync(code: string): Promise<SyncResult> {
   }
 }
 
-export async function syncNow(): Promise<Omit<SyncResult, 'registration' | 'pending'>> {
+export async function syncNow(): Promise<Omit<SyncResult, 'registration' | 'pending' | 'deferred'>> {
+  await assertSyncNetwork()
   const registration = await getServerRegistration()
   if (!registration?.token || !registration.baseUrl) {
     throw new Error('Nenhum servidor cadastrado')
@@ -378,6 +434,8 @@ export async function syncNow(): Promise<Omit<SyncResult, 'registration' | 'pend
 export async function syncIfApproved(): Promise<'pending' | 'synced' | 'skipped' | 'reset'> {
   const registration = await getServerRegistration()
   if (!registration?.token || !registration.baseUrl) return 'skipped'
+  const network = await syncAllowedOnCurrentNetwork()
+  if (!network.ok) return 'skipped'
   try {
     const status = await fetchDeviceStatus()
     if (!status) return 'skipped'

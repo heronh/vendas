@@ -1,8 +1,8 @@
 # Controle de Vendas — API Go + Postgres
 
-Servidor do catálogo e da sincronização: autenticação por senha na página, produtos no Postgres e API HTTPS/JSON para os celulares.
+Servidor do catálogo e da sincronização: autenticação por senha na página, produtos no Postgres remoto e API HTTPS/JSON para os celulares.
 
-Em produção a API roda no **Cloud Run** (projeto GCP `beautysales`) com **Cloud SQL**. No computador, o mesmo binário sobe com Docker + Postgres local.
+Em produção a API roda no **Cloud Run** (projeto GCP `beautysales`) com **Cloud SQL**. O host não sobe Postgres local nem Docker de banco: `DATABASE_URL` aponta sempre para o Postgres remoto.
 
 O aplicativo **Android** cadastra o usuário pelo e-mail e a nuvem com o código de 6 dígitos. O **iOS** ainda não tem app; a API (`/api/discover`, `/api/pair`, `/api/sync`, `/api/device`) fica pronta para o mesmo fluxo.
 
@@ -25,17 +25,18 @@ A senha inicial do **admin** vem de `HOST_PASSWORD`. Depois da primeira troca na
 
 ## Desenvolvimento local
 
-Pré-requisitos: Go 1.22+, Docker.
+Pré-requisitos: Go 1.22+. Use o **mesmo Postgres remoto** da produção (secret `vendas-database-url`). Não há container de banco neste repositório.
 
 ```bash
 cd host
-docker compose up -d
 export HOST_PASSWORD='000000'
-export DATABASE_URL='postgres://vendas:vendas@127.0.0.1:5432/vendas?sslmode=disable'
+export DATABASE_URL="$(gcloud secrets versions access latest --secret=vendas-database-url)"
 go run .
 ```
 
-Abra `http://127.0.0.1:3847`. Com senha `000000`, o login do admin cai na tela de troca com um alerta. Variáveis opcionais: `PORT` (padrão `3847`), `SESSION_SECRET`, `PAIRING_CODE` (se vazio, um código novo é gerado a cada processo).
+Se o Cloud SQL não aceitar conexão direta do seu computador, use o [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/postgres/connect-auth-proxy) apontando para a instância `beautysales:us-central1:starter-postgres-db` e coloque em `DATABASE_URL` o endereço do proxy.
+
+Abra `http://127.0.0.1:3847`. Com senha `000000`, o login do admin cai na tela de troca com um alerta. Variáveis opcionais: `PORT` (padrão `3847`), `SESSION_SECRET`, `PAIRING_CODE` (se vazio, um código novo é gerado a cada processo). `DATABASE_URL` é obrigatória.
 
 ## Páginas do admin
 
