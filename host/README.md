@@ -29,8 +29,8 @@ Pré-requisitos: Go 1.22+. Use o **mesmo Postgres remoto** da produção (secret
 
 ```bash
 cd host
-export HOST_PASSWORD='000000'
 export DATABASE_URL="$(gcloud secrets versions access latest --secret=vendas-database-url)"
+export HOST_PASSWORD='000000'
 go run .
 ```
 

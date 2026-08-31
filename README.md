@@ -38,7 +38,7 @@ Com exceção da tela de entrada, as demais telas usam o logo da Beauty Brasil c
 
 ## Como executar no computador (desenvolvimento)
 
-Pré-requisito: Node.js 22+. Os comandos do app implementado ficam em `android`:
+Pré-requisito do app: Node.js 22+. Os comandos ficam em `android`:
 
 ```bash
 cd android
@@ -47,6 +47,17 @@ npm run dev
 ```
 
 Abra `http://localhost:5173` no próprio computador.
+
+O host não usa Postgres local nem Docker de banco. `DATABASE_URL` é obrigatória e aponta para o Cloud SQL. O `docker build` do `deploy.sh` só empacota a API no Cloud Run.
+
+```bash
+cd host
+export DATABASE_URL="$(gcloud secrets versions access latest --secret=vendas-database-url)"
+export HOST_PASSWORD='000000'
+go run .
+```
+
+Abra `http://127.0.0.1:3847`. Detalhes em [host/README.md](host/README.md).
 
 ## Android ou iOS pelo navegador (precisa de um servidor)
 
