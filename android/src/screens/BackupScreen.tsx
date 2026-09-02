@@ -24,7 +24,8 @@ import {
   syncAllowedOnCurrentNetwork,
   syncNow,
 } from '../services/lanSync'
-import type { ServerRegistration } from '../types'
+import type { AppModeName, ServerRegistration } from '../types'
+import { getAppMode } from '../services/appMode'
 
 export function BackupScreen() {
   const navigate = useNavigate()
@@ -38,17 +39,20 @@ export function BackupScreen() {
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [userEmail, setUserEmail] = useState('')
   const [allowMobile, setAllowMobile] = useState(false)
+  const [mode, setMode] = useState<AppModeName | undefined>()
 
   async function refreshServer() {
-    const [registration, profile, status, mobile] = await Promise.all([
+    const [registration, profile, status, mobile, appMode] = await Promise.all([
       getServerRegistration(),
       getOrCreateProfile(),
       fetchDeviceStatus(),
       getAllowMobileData(),
+      getAppMode(),
     ])
     setServer(registration)
     setUserEmail(normalizeEmail(profile.email))
     setAllowMobile(mobile)
+    setMode(appMode?.mode)
     if (status) setEnabled(status.enabled)
     else setEnabled(registration ? null : false)
     return status
@@ -257,20 +261,23 @@ export function BackupScreen() {
     }
   }
 
-  const registered = Boolean(server)
+  const standalone = mode === 'stand_alone' || !mode
+  const registered = Boolean(server) && !standalone
   const pending = registered && enabled === false
 
   return (
     <main>
       <Topbar title="Backup e sincronização" backTo="/menu" />
-      <p className={`server-status ${registered && enabled ? 'is-on' : registered ? 'is-off' : 'is-off'}`}>
-        {!registered
-          ? 'Nenhuma nuvem cadastrada'
-          : pending
-            ? 'Aguardando liberação do admin'
-            : enabled
-              ? 'Nuvem liberada'
-              : 'Nuvem cadastrada'}
+      <p className={`server-status ${registered && enabled ? 'is-on' : 'is-off'}`}>
+        {standalone
+          ? 'Stand alone · backup só por arquivo'
+          : !registered
+            ? 'Nenhuma nuvem cadastrada'
+            : pending
+              ? 'Aguardando sincronização'
+              : enabled
+                ? 'Nuvem ativa'
+                : 'Nuvem cadastrada'}
       </p>
       {userEmail ? (
         <p className="muted" style={{ marginTop: 0 }}>
@@ -281,6 +288,8 @@ export function BackupScreen() {
           Sem e-mail no cadastro. O admin identifica o usuário pelo e-mail.
         </p>
       )}
+      {!standalone ? (
+      <>
       {registered ? (
         <p className="muted" style={{ marginTop: 0 }}>
           HTTPS/JSON · {server?.baseUrl}
@@ -325,40 +334,14 @@ export function BackupScreen() {
         </div>
       </section>
 
-      {!registered ? (
-        <section className="card stack" style={{ marginTop: 14 }}>
-          <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na nuvem</h2>
-          <p className="muted">
-            Cadastre este celular na API. O admin libera o e-mail manualmente. Só então o aplicativo
-            sincroniza: o catálogo de produtos é comum; clientes e lançamentos são só deste usuário.
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => {
-              setError('')
-              setMessage('')
-              setCode('')
-              setPairOpen(true)
-            }}
-            disabled={busy}
-          >
-            Cadastrar nuvem
-          </Button>
-        </section>
-      ) : (
+      {registered ? (
         <section className="card stack" style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Sincronização</h2>
-          {pending ? (
-            <p className="muted">
-              Este e-mail está na fila do admin. Depois da liberação, o aplicativo envia e recebe
-              clientes, produtos e lançamentos automaticamente.
-            </p>
-          ) : (
           <p className="muted">
-            O catálogo de produtos é comum a todos os usuários e ao admin. Clientes, vendas e
-            pagamentos ficam só neste e-mail.
+            {mode === 'group'
+              ? 'O catálogo de produtos é compartilhado na empresa. Clientes e lançamentos são só deste usuário.'
+              : 'Backup automático na nuvem só desta conta. Clientes e lançamentos não são compartilhados.'}
           </p>
-          )}
           <Button variant="primary" onClick={() => void confirmSync()} disabled={busy || pending}>
             Sincronizar agora
           </Button>
@@ -366,6 +349,10 @@ export function BackupScreen() {
             Desconectar nuvem
           </Button>
         </section>
+      ) : null}
+      </>
+      ) : (
+        <p className="muted">Neste modo o backup é só o arquivo JSON abaixo.</p>
       )}
 
       <section className="card stack" style={{ marginTop: 14 }}>

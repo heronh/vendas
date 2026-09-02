@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { isDefaultPassword, isUnlocked } from './auth'
 import { Layout } from './components/Layout'
 import { AccountScreen } from './screens/AccountScreen'
@@ -7,8 +7,11 @@ import { BackupScreen } from './screens/BackupScreen'
 import { ChangePasswordScreen } from './screens/ChangePasswordScreen'
 import { ClientFormScreen } from './screens/ClientFormScreen'
 import { ClientListScreen } from './screens/ClientListScreen'
+import { GroupAdminScreen } from './screens/GroupAdminScreen'
 import { HelpScreen } from './screens/HelpScreen'
+import { LicenseScreen } from './screens/LicenseScreen'
 import { MenuScreen } from './screens/MenuScreen'
+import { ModeScreen } from './screens/ModeScreen'
 import { ProductFormScreen } from './screens/ProductFormScreen'
 import { ProductListScreen } from './screens/ProductListScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
@@ -16,6 +19,7 @@ import { RegisterScreen } from './screens/RegisterScreen'
 import { ReportsScreen } from './screens/ReportsScreen'
 import { SaleScreen } from './screens/SaleScreen'
 import { SplashScreen } from './screens/SplashScreen'
+import { getAppMode, licenseAllows } from './services/appMode'
 
 function RequireSession({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'load' | 'login' | 'register' | 'ok'>('load')
@@ -31,6 +35,26 @@ function RequireSession({ children }: { children: ReactNode }) {
   if (state === 'load') return null
   if (state === 'register') return <Navigate to="/cadastro" replace />
   if (state === 'login') return <Navigate to="/" replace />
+  return children
+}
+
+const OPEN_PATHS = new Set(['/menu', '/backup', '/perfil', '/ajuda', '/modo', '/cobranca', '/administracao'])
+
+function RequireLicense({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const [gate, setGate] = useState<'load' | 'mode' | 'pay' | 'ok'>('load')
+
+  useEffect(() => {
+    void getAppMode().then((mode) => {
+      if (!mode) setGate('mode')
+      else if (!licenseAllows(mode) && !OPEN_PATHS.has(location.pathname)) setGate('pay')
+      else setGate('ok')
+    })
+  }, [location.pathname])
+
+  if (gate === 'load') return null
+  if (gate === 'mode') return <Navigate to="/modo" replace />
+  if (gate === 'pay') return <Navigate to="/cobranca" replace />
   return children
 }
 
@@ -56,9 +80,31 @@ export function App() {
           }
         />
         <Route
+          path="/modo"
           element={
             <RequireSession>
-              <Layout />
+              <div className="app-shell">
+                <ModeScreen />
+              </div>
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/cobranca"
+          element={
+            <RequireSession>
+              <div className="app-shell">
+                <LicenseScreen />
+              </div>
+            </RequireSession>
+          }
+        />
+        <Route
+          element={
+            <RequireSession>
+              <RequireLicense>
+                <Layout />
+              </RequireLicense>
             </RequireSession>
           }
         >
@@ -75,6 +121,7 @@ export function App() {
           <Route path="/backup" element={<BackupScreen />} />
           <Route path="/perfil" element={<ProfileScreen />} />
           <Route path="/ajuda" element={<HelpScreen />} />
+          <Route path="/administracao" element={<GroupAdminScreen />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

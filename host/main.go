@@ -24,18 +24,21 @@ type server struct {
 	db                *sql.DB
 	port              int
 	bootstrapPassword string
+	suPassword        string
 	sessionKey        []byte
 	pairingCode       string
 	tmpl              *template.Template
 }
 
 func main() {
+	loadDotEnv()
 	ctx := context.Background()
 	dsn := env("DATABASE_URL", "")
 	if dsn == "" {
 		log.Fatal("defina DATABASE_URL com o Postgres remoto (Cloud SQL). O host não usa banco local.")
 	}
 	password := env("HOST_PASSWORD", defaultPassword)
+	suPassword := env("SU_PASSWORD", defaultSuPassword)
 	port := envInt("PORT", defaultPort)
 
 	db, err := sql.Open("pgx", dsn)
@@ -63,12 +66,16 @@ func main() {
 		db:                db,
 		port:              port,
 		bootstrapPassword: password,
+		suPassword:        suPassword,
 		sessionKey:        sessionSecret(),
 		pairingCode:       pairing,
 		tmpl:              parseTemplates(),
 	}
 	if err := s.ensurePassword(ctx); err != nil {
 		log.Fatalf("senha inicial: %v", err)
+	}
+	if err := s.ensureSuPassword(ctx); err != nil {
+		log.Fatalf("senha SU inicial: %v", err)
 	}
 
 	mux := http.NewServeMux()
@@ -90,8 +97,20 @@ func main() {
 	mux.HandleFunc("GET /administracao", s.handleAdmin)
 	mux.HandleFunc("POST /administracao/{id}/liberar", s.handleAdminEnable)
 	mux.HandleFunc("POST /administracao/{id}/bloquear", s.handleAdminDisable)
+	mux.HandleFunc("POST /administracao/{id}/licenca", s.handleAdminLicense)
 	mux.HandleFunc("GET /administracao/{id}/senha", s.handleAdminReset)
 	mux.HandleFunc("POST /administracao/{id}/senha", s.handleAdminReset)
+	mux.HandleFunc("GET /su", s.handleSu)
+	mux.HandleFunc("GET /su/login", s.handleSuLogin)
+	mux.HandleFunc("POST /su/login", s.handleSuLogin)
+	mux.HandleFunc("GET /su/logout", s.handleSuLogout)
+	mux.HandleFunc("POST /su/logout", s.handleSuLogout)
+	mux.HandleFunc("GET /su/senha", s.handleSuPassword)
+	mux.HandleFunc("POST /su/senha", s.handleSuPassword)
+	mux.HandleFunc("POST /su/usuarios/{id}/liberar", s.handleSuUserEnable)
+	mux.HandleFunc("POST /su/usuarios/{id}/bloquear", s.handleSuUserDisable)
+	mux.HandleFunc("POST /su/grupos/{id}/liberar", s.handleSuGroupEnable)
+	mux.HandleFunc("POST /su/grupos/{id}/bloquear", s.handleSuGroupDisable)
 	mux.HandleFunc("GET /healthz", s.handleHealth)
 	mux.HandleFunc("GET /health", s.handleHealth)
 	mux.HandleFunc("GET /api/discover", s.handleDiscover)
@@ -99,6 +118,14 @@ func main() {
 	mux.HandleFunc("GET /api/device", s.handleDevice)
 	mux.HandleFunc("POST /api/device", s.handleDevice)
 	mux.HandleFunc("POST /api/sync", s.handleSync)
+	mux.HandleFunc("POST /api/mode/standalone", s.handleModeStandalone)
+	mux.HandleFunc("POST /api/mode/connected", s.handleModeConnected)
+	mux.HandleFunc("POST /api/mode/company", s.handleModeCompany)
+	mux.HandleFunc("POST /api/mode/join", s.handleModeJoin)
+	mux.HandleFunc("GET /api/members", s.handleMembers)
+	mux.HandleFunc("POST /api/members/{id}/excluir", s.handleMemberDelete)
+	mux.HandleFunc("POST /api/password-reset", s.handlePasswordResetRequest)
+	mux.HandleFunc("POST /api/password-reset/confirm", s.handlePasswordResetConfirm)
 
 	addr := fmt.Sprintf("0.0.0.0:%d", port)
 	httpServer := &http.Server{Addr: addr, Handler: withCORS(mux)}

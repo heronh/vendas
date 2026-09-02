@@ -1,0 +1,172 @@
+PROMPT DE ESPECIFICAÇÃO: MODELOS DE DADOS DO CONTROLE DE VENDAS
+1. CONTEXTO E OBJETIVO
+Descrever, em texto, os modelos persistidos e derivados usados pelo aplicativo atual (Beauty Brasil SJC / vendas-beauty-brasil). A persistência local é IndexedDB via Dexie (banco "vendas-beauty-brasil"). Valores monetários são inteiros em centavos. Datas de negócio e auditoria são timestamps em milissegundos (epoch). Identificadores de entidades de negócio são UUID em string, gerados com crypto.randomUUID().
+
+Este prompt deve ser usado como contrato de domínio: qualquer implementação, migração, API, backup ou tela nova deve respeitar estes campos, índices, regras de saldo e formatos.
+
+2. BANCO LOCAL (DEXIE)
+Nome do banco: vendas-beauty-brasil
+Versão 1 — stores:
+- clients: chave id; índices fullName, tradeName, company
+- products: chave id; índices description, barcode
+- sales: chave id; índices clientId, occurredAt, productId
+- payments: chave id; índices clientId, occurredAt
+- profile: chave id
+Versão 2 — stores adicionais:
+- settings: chave id (registros heterogêneos discriminados pelo próprio id)
+
+Tabelas: clients, products, sales, payments, profile, settings.
+
+3. MODELOS PERSISTIDOS
+
+3.1. Cliente (Client) — tabela clients
+- id: string (UUID, chave primária)
+- fullName: string — nome completo; usado em busca e ordenação da lista
+- tradeName: string — nome fantasia / resumido
+- company: string — empresa
+- phone: string
+- email: string
+- cep: string — dígitos de CEP; busca ViaCEP preenche logradouro
+- street: string — logradouro
+- neighborhood: string — bairro
+- city: string — cidade
+- state: string — UF
+- number: string — número
+- complement: string
+- createdAt: number — timestamp de criação
+- updatedAt: number — timestamp da última alteração
+Regras: cadastro e edição pelo formulário de cliente. Saldo devedor NÃO é campo persistido; é calculado (soma das vendas do cliente menos soma dos pagamentos).
+
+3.2. Produto (Product) — tabela products
+- id: string (UUID)
+- description: string — descrição; índice e busca
+- supplier: string — fornecedor
+- costPriceCents: number — preço de custo em centavos
+- salePriceCents: number — preço de venda em centavos (sugestão no lançamento)
+- barcode: string — código de barras / QR; usado para casar leitura da câmera
+- imageDataUrl: string opcional — imagem em data URL
+- createdAt: number
+- updatedAt: number
+
+3.3. Venda / lançamento (Sale) — tabela sales
+- id: string (UUID)
+- clientId: string — FK lógica para Client.id
+- productId: string opcional — FK lógica para Product.id (pode ficar vazio se o produto for só descritivo)
+- productDescription: string — descrição congelada no momento da venda
+- quantity: number
+- unitPriceCents: number — unitário no lançamento (editável; não precisa igualar o cadastro)
+- totalCents: number — quantity * unitPriceCents
+- occurredAt: number — data/hora do lançamento (editável; default = agora)
+- createdAt: number — auditoria de gravação
+Regras: aumenta o saldo devedor do cliente. Histórico de conta corrente usa kind "sale" e sinal positivo.
+
+3.4. Pagamento / abate (Payment) — tabela payments
+- id: string (UUID)
+- clientId: string — FK lógica para Client.id
+- amountCents: number — valor recebido em centavos
+- occurredAt: number — data do recebimento
+- notes: string opcional
+- createdAt: number
+Regras: reduz o saldo devedor. Histórico usa kind "payment" e sinal negativo.
+
+3.5. Perfil local (Profile) — tabela profile
+Registro único com id fixo "local":
+- id: literal "local"
+- displayName: string — nome do profissional
+- company: string — default de criação: "Beauty Brasil SJC"
+- phone: string
+- email: string — exigido (normalizado) para sincronização com nuvem/LAN
+- updatedAt: number
+Se não existir, o app cria o registro com company preenchida e demais campos vazios.
+
+3.6. Configurações (AppSetting) — tabela settings
+União discriminada pelo campo id. Três (quatro) formas:
+
+ServerRegistration — id literal "lan-server"
+- ssid: string
+- baseUrl: string
+- token: string
+- pairedAt: number
+Pareamento com servidor LAN.
+
+WifiMemory — id literal "lan-wifi"
+- ssid: string
+- savedAt: number
+Última rede Wi-Fi lembrada.
+
+SyncNetworkSetting — id literal "sync-network"
+- allowMobileData: boolean
+- updatedAt: number
+Se a sincronização pode usar dados móveis.
+
+AppLock — id literal "app-lock"
+- passwordHash: string
+- updatedAt: number
+Bloqueio local do aplicativo.
+
+AppModeSetting — id literal "app-mode"
+- mode: "stand_alone" | "connected" | "group"
+- companyId, signature, companyName, role ("owner"|"member"|""), licenseStatus ("pending"|"paid"|"group_covered"|"blocked"), userId opcionais
+- updatedAt: number
+
+CompanyProfileSetting — id literal "company-profile"
+- legalName, tradeName, cnpj, email, phone, city, state, signature
+- updatedAt: number
+Cadastro da empresa no modo grupo (primeiro usuário).
+
+4. MODELOS DE TROCA E DERIVADOS (NÃO SÃO STORES PRÓPRIAS)
+
+4.1. BackupPayload — arquivo de backup/restauração JSON
+- version: 1 ou 2
+- app: literal "vendas-beauty-brasil"
+- exportedAt: string (ISO)
+- clients, products, sales, payments, profile
+- mode (versão 2, opcional): stand_alone | connected | group
+Restauração substitui as tabelas de negócio. settings (pareamento, lock, modo, licença) não entram; licença nunca é restaurada como paga.
+
+Assinatura da empresa: SHA-256 de legalName|tradeName|cnpj|email|phone|city|state (trim, CNPJ só dígitos, e-mail lower); os 6 primeiros hex formam a assinatura. Colisão: nonce incremental após \\0.
+
+4.2. LedgerEntry — linha unificada da conta corrente (somente UI/cálculo)
+- id: string
+- kind: "sale" | "payment"
+- occurredAt: number
+- amountCents: number
+- title: string
+- detail: string opcional
+Ordenação: occurredAt decrescente (mais recente primeiro).
+
+4.3. Relatórios
+ReportPeriod: "30d" (últimos 30 dias) | "month" (mês corrente, do dia 1 até agora).
+PeriodRange: from, to (timestamps) e label textual.
+ClientRank: clientId, name, cents — ranking de clientes (devedores ou compradores).
+ProductRank: key, name, quantity, revenueCents — ranking de produtos.
+ReportData:
+- range: PeriodRange
+- salesTotalCents, paymentsTotalCents
+- topDebtors, topBuyers: ClientRank[] (até 10)
+- topProductsByRevenue, topProductsByQuantity: ProductRank[] (até 10)
+Saldo para ranking de devedores: balancesByClient = soma de totalCents das vendas menos soma de amountCents dos pagamentos, por clientId. Só entram saldos > 0.
+
+4.4. Endereço ViaCEP (CepAddress) — resposta normalizada da consulta
+- street, neighborhood, city, state
+Não é persistido isoladamente; copia-se para os campos de Client.
+
+4.5. Sincronização LAN/nuvem
+Corpo enviado e recebido reutiliza Product[], Client[], Sale[], Payment[].
+Payload de sync inclui ainda passwordReset: boolean.
+Regra de merge no dispositivo:
+- produtos: inclusão e atualização por id (catálogo da empresa no grupo, ou do usuário no modo conectado)
+- clientes, vendas e pagamentos: apenas registros cujo id ainda não existe localmente
+E-mail do Profile.local é obrigatório e normalizado antes de falar com o servidor.
+Stand alone não envia sync; só licença e reset de senha.
+
+5. REGRAS TRANSVERSAIS
+1. Dinheiro sempre em centavos (inteiro). Exibição em BRL é formatação, não armazenamento.
+2. Saldo devedor do cliente = sum(sales.totalCents) - sum(payments.amountCents) para aquele clientId. Nunca gravar saldo duplicado no Cliente.
+3. Relacionamentos são lógicos (strings de id), sem FK do motor IndexedDB.
+4. productId em Sale é opcional; productDescription deve permanecer mesmo se o produto for apagado depois.
+5. resetAllData limpa clients, products, sales, payments, profile e settings.
+6. Backup versão 1 cobre clientes, produtos, vendas, pagamentos e perfil; não cobre settings (pareamento, Wi-Fi, lock, flag de dados móveis).
+
+6. RESUMO TEXTUAL PARA IMPLEMENTAÇÃO
+Implemente ou preserve um domínio offline-first com seis coleções Dexie. Clientes têm dados cadastrais e endereço (CEP). Produtos têm custo, venda, código de barras e imagem opcional. Vendas e pagamentos formam o extrato do cliente e o saldo. Há um perfil singleton "local" e settings singleton por id fixo (lan-server, lan-wifi, sync-network, app-lock). Backup JSON versão 1 e sync LAN repetem os quatro arrays de negócio mais o perfil no backup. Relatórios e ledger são visões calculadas, não tabelas.

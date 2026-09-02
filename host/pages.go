@@ -218,7 +218,7 @@ func (s *server) handleProductNew(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "product_form.html", base)
 		return
 	}
-	if err := upsertProducts(r.Context(), s.db, []Product{p}, "local", ""); err != nil {
+	if err := upsertProducts(r.Context(), s.db, []Product{p}, "local", "", "", ""); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -426,22 +426,42 @@ func (s *server) handleAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type row struct {
-		ID           string
-		Email        string
-		Name         string
-		Professional string
-		Enabled      bool
-		PairedAt     string
+		ID            string
+		Email         string
+		Name          string
+		Professional  string
+		Enabled       bool
+		PairedAt      string
+		Mode          string
+		LicenseStatus string
+		UserID        string
+		CompanyID     string
 	}
 	var views []row
 	for _, d := range devices {
+		mode := d.Mode
+		if mode == "" {
+			mode = "connected"
+		}
+		lic := d.LicenseStatus
+		if lic == "" {
+			if d.Enabled {
+				lic = "paid"
+			} else {
+				lic = "pending"
+			}
+		}
 		views = append(views, row{
-			ID:           d.ID,
-			Email:        d.DisplayEmail(),
-			Name:         d.DisplayName(),
-			Professional: d.DisplayProfessional(),
-			Enabled:      d.Enabled,
-			PairedAt:     formatWhen(d.PairedAt),
+			ID:            d.ID,
+			Email:         d.DisplayEmail(),
+			Name:          d.DisplayName(),
+			Professional:  d.DisplayProfessional(),
+			Enabled:       d.Enabled,
+			PairedAt:      formatWhen(d.PairedAt),
+			Mode:          mode,
+			LicenseStatus: lic,
+			UserID:        d.UserID,
+			CompanyID:     d.CompanyID,
 		})
 	}
 	notice := ""
@@ -452,6 +472,8 @@ func (s *server) handleAdmin(w http.ResponseWriter, r *http.Request) {
 		notice = "Usuário bloqueado. O histórico já recebido permanece."
 	case "senha":
 		notice = "Senha do aplicativo redefinida para 000000. No próximo acesso o celular abre o cadastro de usuário."
+	case "licenca":
+		notice = "Licença atualizada."
 	}
 	s.render(w, "admin.html", map[string]any{
 		"Title":      "Administração de usuários · Host",
@@ -472,7 +494,17 @@ func (s *server) handleAdminEnable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
-	if err := s.setDeviceEnabled(r.Context(), r.PathValue("id"), true); err != nil {
+	dev, err := s.getDevice(r.Context(), r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if dev.UserID != "" {
+		if err := s.setUserLicense(r.Context(), dev.UserID, "paid"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else if err := s.setDeviceEnabled(r.Context(), r.PathValue("id"), true); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -487,11 +519,50 @@ func (s *server) handleAdminDisable(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
 		return
 	}
-	if err := s.setDeviceEnabled(r.Context(), r.PathValue("id"), false); err != nil {
+	dev, err := s.getDevice(r.Context(), r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if dev.UserID != "" {
+		if err := s.setUserLicense(r.Context(), dev.UserID, "blocked"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else if err := s.setDeviceEnabled(r.Context(), r.PathValue("id"), false); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/administracao?ok=bloqueado", http.StatusSeeOther)
+}
+
+func (s *server) handleAdminLicense(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requirePage(w, r); !ok {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+	dev, err := s.getDevice(r.Context(), r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	status := strings.TrimSpace(r.FormValue("status"))
+	if status != "paid" && status != "pending" && status != "blocked" {
+		http.Error(w, "status inválido", http.StatusBadRequest)
+		return
+	}
+	if dev.UserID == "" {
+		http.Redirect(w, r, "/administracao", http.StatusSeeOther)
+		return
+	}
+	if err := s.setUserLicense(r.Context(), dev.UserID, status); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/administracao?ok=licenca", http.StatusSeeOther)
 }
 
 func (s *server) handleAdminReset(w http.ResponseWriter, r *http.Request) {
@@ -543,4 +614,3 @@ func reportPeriod(r *http.Request) string {
 	}
 	return "mes"
 }
-

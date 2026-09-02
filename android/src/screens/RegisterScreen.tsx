@@ -85,7 +85,7 @@ export function RegisterScreen() {
       await setPassword(password)
       await notifyPasswordChanged()
       setUnlocked(true)
-      navigate('/menu', { replace: true })
+      navigate('/modo', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível concluir o cadastro')
     } finally {

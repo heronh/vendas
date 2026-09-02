@@ -240,8 +240,26 @@ export async function fetchDeviceStatus(): Promise<{
         headers: { Authorization: `Bearer ${registration.token}` },
       },
       8000,
-    )) as { enabled?: boolean; passwordReset?: boolean; email?: string }
+    )) as {
+      enabled?: boolean
+      passwordReset?: boolean
+      email?: string
+      mode?: string
+      role?: string
+      licenseStatus?: string
+      licenseOk?: boolean
+      companyId?: string
+      signature?: string
+      companyName?: string
+      kickedFromGroup?: boolean
+      userId?: string
+      token?: string
+    }
     if (data.passwordReset) await applyPasswordResetFlag(true)
+    if (typeof data.mode === 'string') {
+      const { applyAccountStatus } = await import('./appMode')
+      await applyAccountStatus(data as import('./appMode').AccountStatus)
+    }
     return {
       enabled: Boolean(data.enabled),
       passwordReset: Boolean(data.passwordReset),
@@ -432,6 +450,9 @@ export async function syncNow(): Promise<Omit<SyncResult, 'registration' | 'pend
 }
 
 export async function syncIfApproved(): Promise<'pending' | 'synced' | 'skipped' | 'reset'> {
+  const modeRow = await db.settings.get('app-mode')
+  const mode = modeRow?.id === 'app-mode' ? modeRow.mode : undefined
+  if (mode === 'stand_alone' || !mode) return 'skipped'
   const registration = await getServerRegistration()
   if (!registration?.token || !registration.baseUrl) return 'skipped'
   const network = await syncAllowedOnCurrentNetwork()

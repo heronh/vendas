@@ -2,18 +2,21 @@ import { Capacitor } from '@capacitor/core'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { db } from '../db'
+import { getAppMode } from './appMode'
 import type { BackupPayload } from '../types'
 
 export async function exportBackup(): Promise<BackupPayload> {
-  const [clients, products, sales, payments, profile] = await Promise.all([
+  const [clients, products, sales, payments, profile, modeRow] = await Promise.all([
     db.clients.toArray(),
     db.products.toArray(),
     db.sales.toArray(),
     db.payments.toArray(),
     db.profile.get('local'),
+    getAppMode(),
   ])
+  const mode = modeRow?.mode
   return {
-    version: 1,
+    version: 2,
     app: 'vendas-beauty-brasil',
     exportedAt: new Date().toISOString(),
     clients,
@@ -21,6 +24,7 @@ export async function exportBackup(): Promise<BackupPayload> {
     sales,
     payments,
     profile: profile ?? null,
+    mode,
   }
 }
 
@@ -35,7 +39,7 @@ export function serializeBackup(payload: BackupPayload): string {
 
 export function parseBackup(raw: string): BackupPayload {
   const parsed = JSON.parse(raw) as Partial<BackupPayload>
-  if (parsed.version !== 1 || parsed.app !== 'vendas-beauty-brasil') {
+  if (parsed.app !== 'vendas-beauty-brasil' || (parsed.version !== 1 && parsed.version !== 2)) {
     throw new Error('Arquivo de backup inválido ou de outra versão')
   }
   if (

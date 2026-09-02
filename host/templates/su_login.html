@@ -1,0 +1,14 @@
+{{template "head" .}}
+<div class="login-page">
+  <form method="post" action="/su/login">
+    <h1>Administrador SU</h1>
+    <p class="muted">Liberação e bloqueio de usuários e grupos. Senha inicial temporária no arquivo <strong>.env</strong> (<code>SU_PASSWORD</code>).</p>
+    {{if .Error}}<p class="err">Senha inválida.</p>{{end}}
+    <label class="field mt-4" for="password">Senha do administrador SU</label>
+    <input class="field-input" id="password" name="password" type="password" required autofocus autocomplete="current-password" />
+    <button class="btn" type="submit">Entrar</button>
+    <p class="muted mt-4"><a href="/login">Voltar ao login do host</a></p>
+  </form>
+</div>
+</body>
+</html>

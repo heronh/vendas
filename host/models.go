@@ -6,10 +6,13 @@ import (
 )
 
 const (
-	defaultPort     = 3847
-	defaultPassword = "000000"
-	sessionOK       = "ok"
-	sessionChange   = "change"
+	defaultPort       = 3847
+	defaultPassword   = "000000"
+	defaultSuPassword = "123mudar"
+	sessionOK         = "ok"
+	sessionChange     = "change"
+	sessionSuOK       = "suok"
+	sessionSuChange   = "suchange"
 )
 
 type Product struct {
@@ -24,6 +27,8 @@ type Product struct {
 	UpdatedAt      int64   `json:"updatedAt"`
 	Source         string  `json:"source,omitempty"`
 	DeviceID       string  `json:"deviceId,omitempty"`
+	CompanyID      string  `json:"companyId,omitempty"`
+	UserID         string  `json:"userId,omitempty"`
 }
 
 type Client struct {
@@ -43,6 +48,7 @@ type Client struct {
 	CreatedAt    int64  `json:"createdAt"`
 	UpdatedAt    int64  `json:"updatedAt"`
 	DeviceID     string `json:"deviceId,omitempty"`
+	UserID       string `json:"userId,omitempty"`
 }
 
 type Sale struct {
@@ -56,6 +62,7 @@ type Sale struct {
 	OccurredAt         int64   `json:"occurredAt"`
 	CreatedAt          int64   `json:"createdAt"`
 	DeviceID           string  `json:"deviceId,omitempty"`
+	UserID             string  `json:"userId,omitempty"`
 }
 
 type Payment struct {
@@ -66,18 +73,56 @@ type Payment struct {
 	Notes       *string `json:"notes,omitempty"`
 	CreatedAt   int64   `json:"createdAt"`
 	DeviceID    string  `json:"deviceId,omitempty"`
+	UserID      string  `json:"userId,omitempty"`
+}
+
+type Company struct {
+	ID          string `json:"id"`
+	LegalName   string `json:"legalName"`
+	TradeName   string `json:"tradeName"`
+	CNPJ        string `json:"cnpj"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	Signature   string `json:"signature"`
+	HashHex     string `json:"hashHex,omitempty"`
+	OwnerUserID string `json:"ownerUserId,omitempty"`
+	CreatedAt   int64  `json:"createdAt"`
+	Enabled     bool   `json:"enabled"`
+}
+
+type AppUser struct {
+	ID                 string
+	Email              string
+	DisplayName        string
+	Phone              string
+	PasswordHash       string
+	Mode               string
+	CompanyID          string
+	Role               string
+	LicenseStatus      string
+	DeletedFromGroupAt int64
+	CreatedAt          int64
+	UpdatedAt          int64
 }
 
 type Device struct {
-	ID            string
-	Token         string
-	Name          string
-	Professional  string
-	Email         string
-	Enabled       bool
-	PasswordReset bool
-	PairedAt      int64
-	LastSyncAt    int64
+	ID                 string
+	Token              string
+	Name               string
+	Professional       string
+	Email              string
+	Enabled            bool
+	PasswordReset      bool
+	PairedAt           int64
+	LastSyncAt         int64
+	UserID             string
+	CompanyID          string
+	Mode               string
+	Role               string
+	LicenseStatus      string
+	DeletedFromGroupAt int64
 }
 
 func (d Device) Label() string {

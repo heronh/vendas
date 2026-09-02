@@ -59,7 +59,7 @@ export interface Profile {
 }
 
 export interface BackupPayload {
-  version: 1
+  version: 1 | 2
   app: 'vendas-beauty-brasil'
   exportedAt: string
   clients: Client[]
@@ -67,6 +67,34 @@ export interface BackupPayload {
   sales: Sale[]
   payments: Payment[]
   profile: Profile | null
+  mode?: AppModeName
+}
+
+export type AppModeName = 'stand_alone' | 'connected' | 'group'
+
+export interface AppModeSetting {
+  id: 'app-mode'
+  mode: AppModeName
+  companyId?: string
+  signature?: string
+  companyName?: string
+  role?: 'owner' | 'member' | ''
+  licenseStatus: 'pending' | 'paid' | 'group_covered' | 'blocked'
+  userId?: string
+  updatedAt: number
+}
+
+export interface CompanyProfileSetting {
+  id: 'company-profile'
+  legalName: string
+  tradeName: string
+  cnpj: string
+  email: string
+  phone: string
+  city: string
+  state: string
+  signature: string
+  updatedAt: number
 }
 
 export interface ServerRegistration {
@@ -95,7 +123,13 @@ export interface AppLock {
   updatedAt: number
 }
 
-export type AppSetting = ServerRegistration | WifiMemory | SyncNetworkSetting | AppLock
+export type AppSetting =
+  | ServerRegistration
+  | WifiMemory
+  | SyncNetworkSetting
+  | AppLock
+  | AppModeSetting
+  | CompanyProfileSetting
 
 export type ReportPeriod = '30d' | 'month'
 
