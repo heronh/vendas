@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatórios gerais · Host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner"><a href="index.html">← mapa da sequência</a> · 07 / 10 · Relatórios gerais</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Relatórios gerais</h1>
+        <p class="muted">Todos os celulares <strong>liberados</strong>. Aparelhos com enabled=false ficam de fora.</p>
+      </div>
+      <a href="01-login.html">Sair</a>
+    </header>
+    <nav class="tabs">
+      <a href="02-inicio.html">Início</a>
+      <a href="03-produtos.html">Produtos</a>
+      <a href="05-clientes.html">Clientes</a>
+      <a href="07-relatorios.html" aria-current="page">Relatórios</a>
+      <a href="09-administracao.html">Administração</a>
+    </nav>
+
+    <p class="btn-row mt-0 mb-4">
+      <a class="btn" href="07-relatorios.html">Gerais</a>
+      <a class="btn btn-ghost" href="08-relatorios-celular.html">Por celular</a>
+    </p>
+
+    <div class="panel">
+      <form class="grid-form" action="07-relatorios.html" method="get">
+        <div>
+          <label class="field" for="periodo">Período</label>
+          <select class="field-input" id="periodo" name="periodo">
+            <option>Mês corrente</option>
+            <option>Últimos 30 dias</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Atualizar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <strong>Vendas</strong>
+        <span>R$ 12.480,00</span>
+        <span class="muted">1 celular no total</span>
+      </div>
+      <div class="card">
+        <strong>Recebimentos</strong>
+        <span>R$ 9.210,00</span>
+      </div>
+      <div class="card">
+        <strong>Saldo em aberto</strong>
+        <span>R$ 3.270,00</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ranking de clientes por saldo devedor</h2>
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Celular</th><th>Saldo</th></tr></thead>
+        <tbody>
+          <tr><td>Ana Paula Ribeiro</td><td>Carla Mendes</td><td>R$ 450,00</td></tr>
+          <tr><td>Beatriz Souza</td><td>Carla Mendes</td><td>R$ 180,00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Produtos mais vendidos (faturamento)</h2>
+      <table class="data">
+        <thead><tr><th>Produto</th><th>Qtd</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td>Drenagem linfática</td><td>22</td><td>R$ 4.840,00</td></tr>
+          <tr><td>Limpeza de pele</td><td>18</td><td>R$ 3.240,00</td></tr>
+          <tr><td>Peeling de diamante</td><td>8</td><td>R$ 2.000,00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

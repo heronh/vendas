@@ -1,0 +1,75 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    <p class="btn-row mt-0 mb-4">
+      <a class="btn" href="/relatorios?periodo={{.Period}}">Gerais</a>
+      <a class="btn btn-ghost" href="/relatorios/celular?periodo={{.Period}}">Por celular</a>
+    </p>
+
+    <div class="panel">
+      <form class="grid-form" method="get" action="/relatorios">
+        <div>
+          <label class="field" for="periodo">Período</label>
+          <select class="field-input" id="periodo" name="periodo">
+            <option value="mes" {{if eq .Period "mes"}}selected{{end}}>Mês corrente</option>
+            <option value="30d" {{if eq .Period "30d"}}selected{{end}}>Últimos 30 dias</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Atualizar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <strong>Vendas</strong>
+        <span>{{.SalesTotal}}</span>
+        <span class="muted">{{.DeviceSummary}}</span>
+      </div>
+      <div class="card">
+        <strong>Recebimentos</strong>
+        <span>{{.PaymentsTotal}}</span>
+      </div>
+      <div class="card">
+        <strong>Saldo em aberto</strong>
+        <span>{{.OpenBalance}}</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ranking de clientes por saldo devedor</h2>
+      {{if .Debtors}}
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Celular</th><th>Saldo</th></tr></thead>
+        <tbody>
+          {{range .Debtors}}
+          <tr><td>{{.Name}}</td><td>{{.Origin}}</td><td>{{.Amount}}</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="muted">Nenhum saldo em aberto neste recorte.</p>
+      {{end}}
+    </div>
+
+    <div class="panel">
+      <h2>Produtos mais vendidos (faturamento)</h2>
+      {{if .Products}}
+      <table class="data">
+        <thead><tr><th>Produto</th><th>Qtd</th><th>Total</th></tr></thead>
+        <tbody>
+          {{range .Products}}
+          <tr><td>{{.Name}}</td><td>{{.Quantity}}</td><td>{{.Amount}}</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="muted">Nenhuma venda no período.</p>
+      {{end}}
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    <p class="btn-row mt-0 mb-4">
+      <a class="btn btn-ghost" href="/relatorios?periodo={{.Period}}">Gerais</a>
+      <a class="btn" href="/relatorios/celular?periodo={{.Period}}{{if .DeviceID}}&amp;device={{.DeviceID}}{{end}}">Por celular</a>
+    </p>
+
+    <div class="panel">
+      <form class="grid-form" method="get" action="/relatorios/celular">
+        <div>
+          <label class="field" for="device">Celular</label>
+          <select class="field-input" id="device" name="device">
+            {{range .DeviceOptions}}
+            <option value="{{.ID}}" {{if .Disabled}}disabled{{end}} {{if .Selected}}selected{{end}}>{{.Label}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div>
+          <label class="field" for="periodo">Período</label>
+          <select class="field-input" id="periodo" name="periodo">
+            <option value="mes" {{if eq .Period "mes"}}selected{{end}}>Mês corrente</option>
+            <option value="30d" {{if eq .Period "30d"}}selected{{end}}>Últimos 30 dias</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Atualizar</button>
+        </div>
+      </form>
+      <p class="muted mt-3">Aparelhos com enabled=false aparecem desabilitados até a Administração liberar.</p>
+    </div>
+
+    {{if .HasDevice}}
+    <div class="cards">
+      <div class="card">
+        <strong>Vendas neste celular</strong>
+        <span>{{.SalesTotal}}</span>
+        <span class="muted">{{.Subtitle}}</span>
+      </div>
+      <div class="card">
+        <strong>Recebimentos</strong>
+        <span>{{.PaymentsTotal}}</span>
+      </div>
+      <div class="card">
+        <strong>Saldo em aberto</strong>
+        <span>{{.OpenBalance}}</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ranking neste aparelho</h2>
+      {{if .Ranking}}
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Compras no período</th><th>Saldo atual</th></tr></thead>
+        <tbody>
+          {{range .Ranking}}
+          <tr><td>{{.Name}}</td><td>{{.PeriodAmount}}</td><td>{{.Balance}}</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="muted">Nenhuma cliente neste aparelho.</p>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="panel">
+      <p class="muted">Nenhum celular liberado para filtrar. Libere um aparelho em Administração.</p>
+    </div>
+    {{end}}
+</div>
+</body>
+</html>

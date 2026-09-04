@@ -1,6 +1,8 @@
 # Controle de Vendas — app Android
 
-Aplicação implementada para Android (Capacitor). Internet entra na busca de CEP, no compartilhamento de backup e na sincronização HTTPS/JSON com a API (`../host` no Cloud Run).
+Aplicação implementada para Android (Capacitor). Os dados de trabalho ficam no banco **local** (Dexie). Internet entra na busca de CEP, no compartilhamento de backup e na sincronização HTTPS/JSON com a API (`../host` no Cloud Run), no Wi-Fi e, se permitido, também nos dados móveis.
+
+O usuário do aplicativo **não** é o admin do host. Senhas são independentes. Na primeira abertura (e sempre que a senha local for **000000**), o app abre o **cadastro de usuário**. O identificador é o **e-mail**. Sincronizar com a nuvem só depois da liberação manual do admin. Em **Backup**, o usuário escolhe sincronizar só no Wi-Fi ou também pelos dados móveis.
 
 Instruções comuns a todas as aplicações estão no [README da raiz](../README.md).
 
@@ -33,6 +35,7 @@ Abra `http://localhost:5173`.
 Build web:
 
 ```bash
+cd android
 npm run build
 npm run preview
 ```

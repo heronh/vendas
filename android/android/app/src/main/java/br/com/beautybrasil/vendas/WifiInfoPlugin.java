@@ -2,6 +2,9 @@ package br.com.beautybrasil.vendas;
 
 import android.Manifest;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
@@ -29,6 +32,36 @@ import com.getcapacitor.annotation.PermissionCallback;
     }
 )
 public class WifiInfoPlugin extends Plugin {
+
+    @PluginMethod
+    public void getTransport(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("type", detectTransport());
+        call.resolve(ret);
+    }
+
+    private String detectTransport() {
+        ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            return "none";
+        }
+        Network network = cm.getActiveNetwork();
+        if (network == null) {
+            return "none";
+        }
+        NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        if (caps == null) {
+            return "none";
+        }
+        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+            return "wifi";
+        }
+        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+            return "cellular";
+        }
+        return "unknown";
+    }
 
     @PluginMethod
     public void getNetwork(PluginCall call) {

@@ -1,0 +1,37 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+
+    <div class="panel">
+      <form class="grid-form" method="post" action="/produtos/novo">
+        <div>
+          <label class="field" for="description">Descrição</label>
+          <input class="field-input" id="description" name="description" required />
+        </div>
+        <div>
+          <label class="field" for="supplier">Fornecedor</label>
+          <input class="field-input" id="supplier" name="supplier" />
+        </div>
+        <div>
+          <label class="field" for="cost">Custo (R$)</label>
+          <input class="field-input" id="cost" name="cost" inputmode="decimal" />
+        </div>
+        <div>
+          <label class="field" for="sale">Venda (R$)</label>
+          <input class="field-input" id="sale" name="sale" inputmode="decimal" />
+        </div>
+        <div>
+          <label class="field" for="barcode">Código de barras</label>
+          <input class="field-input" id="barcode" name="barcode" />
+        </div>
+        <div>
+          <button class="btn" type="submit">Salvar no catálogo</button>
+        </div>
+      </form>
+    </div>
+</div>
+</body>
+</html>

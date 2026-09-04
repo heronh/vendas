@@ -1,0 +1,66 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    {{if .Notice}}<p class="ok">{{.Notice}}</p>{{end}}
+
+    <div class="callout callout-warn">
+      Liberar/pagar a licença libera o uso no celular (stand alone e conectado). Membros de grupo ficam cobertos até serem excluídos.
+      Redefinir senha do aplicativo → <strong>000000</strong>. A senha do admin não muda.
+    </div>
+
+    <div class="panel">
+      <h2>Usuários do aplicativo</h2>
+      {{if .Devices}}
+      <div class="overflow-x">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>E-mail</th>
+            <th>Nome</th>
+            <th>Modo</th>
+            <th>Licença</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Devices}}
+          <tr>
+            <td>{{.Email}}<br><span class="muted">pareado {{.PairedAt}}</span></td>
+            <td>{{.Professional}}<br><span class="muted">{{.Name}}</span></td>
+            <td>{{.Mode}}</td>
+            <td>
+              {{if eq .LicenseStatus "paid"}}<span class="badge badge-ok">Paga</span>
+              {{else if eq .LicenseStatus "group_covered"}}<span class="badge badge-ok">Grupo</span>
+              {{else if eq .LicenseStatus "blocked"}}<span class="badge badge-wait">Bloqueada</span>
+              {{else}}<span class="badge badge-wait">A cobrar</span>{{end}}
+            </td>
+            <td>
+              <div class="btn-row mt-0">
+                <form method="post" action="/administracao/{{.ID}}/licenca">
+                  <input type="hidden" name="status" value="paid">
+                  <button class="btn" type="submit">Marcar paga</button>
+                </form>
+                <form method="post" action="/administracao/{{.ID}}/licenca">
+                  <input type="hidden" name="status" value="pending">
+                  <button class="btn btn-ghost" type="submit">A cobrar</button>
+                </form>
+                <form method="post" action="/administracao/{{.ID}}/bloquear">
+                  <button class="btn btn-ghost" type="submit">Bloquear</button>
+                </form>
+                <a class="btn btn-ghost" href="/administracao/{{.ID}}/senha">Redefinir senha</a>
+              </div>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="muted">Nenhum usuário do aplicativo cadastrado.</p>
+      {{end}}
+    </div>
+</div>
+</body>
+</html>

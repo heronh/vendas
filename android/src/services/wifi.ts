@@ -2,9 +2,36 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 
 interface WifiInfoPlugin {
   getNetwork(): Promise<{ ssid: string | null; ipv4: string | null }>
+  getTransport(): Promise<{ type: string }>
 }
 
 const WifiInfo = registerPlugin<WifiInfoPlugin>('WifiInfo')
+
+export type NetworkTransport = 'wifi' | 'cellular' | 'none' | 'unknown'
+
+function browserTransport(): NetworkTransport {
+  if (typeof navigator === 'undefined' || !navigator.onLine) return 'none'
+  const conn = (navigator as Navigator & { connection?: { type?: string } }).connection
+  const type = conn?.type
+  if (type === 'wifi' || type === 'ethernet') return 'wifi'
+  if (type === 'cellular' || type === 'wimax') return 'cellular'
+  if (type === 'none') return 'none'
+  return 'unknown'
+}
+
+export async function getNetworkTransport(): Promise<NetworkTransport> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const info = await WifiInfo.getTransport()
+      if (info.type === 'wifi' || info.type === 'cellular' || info.type === 'none' || info.type === 'unknown') {
+        return info.type
+      }
+    } catch {
+      /* use browser fallback */
+    }
+  }
+  return browserTransport()
+}
 
 async function getBrowserLocalIpv4(): Promise<string | null> {
   return new Promise((resolve) => {

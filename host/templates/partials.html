@@ -1,0 +1,37 @@
+{{define "head"}}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+{{end}}
+
+{{define "header"}}
+    <header class="app-header">
+      <div>
+        <h1>{{.Heading}}</h1>
+        {{if .Lead}}<p class="muted">{{.Lead}}</p>{{end}}
+      </div>
+      <div class="header-actions">
+        {{if .Back}}<a href="{{.Back.Href}}">{{.Back.Label}}</a>{{else}}
+        {{if not .MustChange}}<a href="/senha">Trocar senha</a>{{end}}
+        <a href="/logout">Sair</a>
+        {{end}}
+      </div>
+    </header>
+{{end}}
+
+{{define "nav"}}
+    {{if not .MustChange}}
+    <nav class="tabs">
+      <a href="/" {{if eq .Tab "inicio"}}aria-current="page"{{end}}>Início</a>
+      <a href="/produtos" {{if eq .Tab "produtos"}}aria-current="page"{{end}}>Produtos</a>
+      <a href="/clientes" {{if eq .Tab "clientes"}}aria-current="page"{{end}}>Clientes</a>
+      <a href="/relatorios" {{if eq .Tab "relatorios"}}aria-current="page"{{end}}>Relatórios</a>
+      <a href="/administracao" {{if eq .Tab "admin"}}aria-current="page"{{end}}>Administração</a>
+    </nav>
+    {{end}}
+{{end}}

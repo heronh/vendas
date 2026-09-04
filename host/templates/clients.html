@@ -1,0 +1,62 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    <div class="callout callout-stop">
+      Somente visualização. Vendas e pagamentos são feitos no celular da profissional.
+    </div>
+
+    <div class="panel">
+      <form class="grid-form" method="get" action="/clientes">
+        <div>
+          <label class="field" for="q">Buscar</label>
+          <input class="field-input" id="q" name="q" placeholder="Nome da cliente" value="{{.Query}}" />
+        </div>
+        <div>
+          <label class="field" for="device">Celular</label>
+          <select class="field-input" id="device" name="device">
+            <option value="">Todos os liberados</option>
+            {{range .Devices}}
+            <option value="{{.ID}}" {{if eq $.DeviceID .ID}}selected{{end}}>{{.Label}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div>
+          <button class="btn" type="submit">Filtrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      {{if .Clients}}
+      <div class="overflow-x">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Celular de origem</th>
+            <th>Saldo devedor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Clients}}
+          <tr>
+            <td>{{.Name}}</td>
+            <td>{{.Origin}}</td>
+            <td>{{.Balance}}</td>
+            <td><a href="/clientes/{{.ID}}">Ver ficha</a></td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="muted">Nenhuma cliente dos celulares liberados.</p>
+      {{end}}
+      {{if .BlockedNote}}<p class="muted mt-3">{{.BlockedNote}}</p>{{end}}
+    </div>
+</div>
+</body>
+</html>

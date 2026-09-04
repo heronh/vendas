@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Administração de usuários · Host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner"><a href="index.html">← mapa da sequência</a> · 09 / 10 · Administração</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Administração de usuários</h1>
+        <p class="muted">O e-mail identifica o usuário do aplicativo. A liberação é manual e feita pelo admin. Padrão: não liberado.</p>
+      </div>
+      <a href="01-login.html">Sair</a>
+    </header>
+    <nav class="tabs">
+      <a href="02-inicio.html">Início</a>
+      <a href="03-produtos.html">Produtos</a>
+      <a href="05-clientes.html">Clientes</a>
+      <a href="07-relatorios.html">Relatórios</a>
+      <a href="09-administracao.html" aria-current="page">Administração</a>
+    </nav>
+
+    <div class="callout callout-warn">
+      Liberar permite sync de clientes, produtos e lançamentos. Bloquear interrompe o aparelho sem apagar o histórico já recebido.
+      Redefinir senha do aplicativo → <strong>000000</strong>. A senha do admin não muda.
+    </div>
+
+    <div class="panel">
+      <h2>Usuários do aplicativo</h2>
+      <div class="overflow-x-auto">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>E-mail</th>
+            <th>Nome</th>
+            <th>Aparelho</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>maria.santos@email.com<br><span class="muted">pareado 31/08/2026 09:12</span></td>
+            <td>Maria Santos</td>
+            <td>Galaxy A54</td>
+            <td><span class="badge badge-wait">Aguardando liberação</span></td>
+            <td>
+              <div class="btn-row mt-0">
+                <a class="btn" href="09-administracao.html?liberar=maria">Liberar</a>
+                <a class="btn btn-ghost" href="10-reset-senha.html">Redefinir senha</a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>carla.mendes@email.com<br><span class="muted">pareado 12/08/2026 18:40</span></td>
+            <td>Carla Mendes</td>
+            <td>Moto G54</td>
+            <td><span class="badge badge-ok">Liberado</span></td>
+            <td>
+              <div class="btn-row mt-0">
+                <a class="btn btn-ghost" href="09-administracao.html?bloquear=carla">Bloquear</a>
+                <a class="btn btn-ghost" href="10-reset-senha.html">Redefinir senha</a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>juliana.costa@email.com<br><span class="muted">pareado 30/08/2026 21:03</span></td>
+            <td>Juliana Costa</td>
+            <td>Galaxy A15</td>
+            <td><span class="badge badge-wait">Aguardando liberação</span></td>
+            <td>
+              <div class="btn-row mt-0">
+                <a class="btn" href="09-administracao.html?liberar=juliana">Liberar</a>
+                <a class="btn btn-ghost" href="10-reset-senha.html">Redefinir senha</a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

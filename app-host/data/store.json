@@ -1,0 +1,17 @@
+{
+  "clients": [],
+  "products": [
+    {
+      "id": "host-product-demo",
+      "description": "Kit servidor",
+      "supplier": "Beauty Brasil",
+      "costPriceCents": 1000,
+      "salePriceCents": 2500,
+      "barcode": "HOSTKIT001",
+      "createdAt": 1,
+      "updatedAt": 1
+    }
+  ],
+  "sales": [],
+  "payments": []
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Início · Host</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/theme.js"></script>
+</head>
+<body class="min-h-screen bg-cream font-serif text-ink">
+  <div class="banner"><a href="index.html">← mapa da sequência</a> · 02 / 10 · Início</div>
+  <div class="wrap">
+    <header class="app-header">
+      <div>
+        <h1>Início</h1>
+        <p class="muted">Painel do admin. Visualiza os celulares liberados. Não registra lançamentos.</p>
+      </div>
+      <a href="01-login.html">Sair</a>
+    </header>
+    <nav class="tabs">
+      <a href="02-inicio.html" aria-current="page">Início</a>
+      <a href="03-produtos.html">Produtos</a>
+      <a href="05-clientes.html">Clientes</a>
+      <a href="07-relatorios.html">Relatórios</a>
+      <a href="09-administracao.html">Administração</a>
+    </nav>
+
+    <div class="panel">
+      <p class="muted">Código para cadastrar o celular (API HTTPS/JSON):</p>
+      <div class="code">482917</div>
+      <p class="muted mt-2.5">O usuário aparece em Administração pelo e-mail, ainda sem liberação. Só sincroniza depois que o admin libera.</p>
+    </div>
+
+    <div class="cards">
+      <a class="card" href="09-administracao.html">
+        <strong>2 aguardando liberação</strong>
+        <span class="muted">maria.santos@email.com · Juliana Costa</span>
+      </a>
+      <a class="card" href="05-clientes.html">
+        <strong>18 clientes</strong>
+        <span class="muted">Somente leitura · origem: celulares liberados</span>
+      </a>
+      <a class="card" href="07-relatorios.html">
+        <strong>R$ 12.480 no mês</strong>
+        <span class="muted">Relatório geral · também há corte por celular</span>
+      </a>
+      <a class="card" href="03-produtos.html">
+        <strong>42 produtos</strong>
+        <span class="muted">Catálogo do host e dos aparelhos</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

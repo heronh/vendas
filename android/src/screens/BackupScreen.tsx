@@ -1,7 +1,9 @@
 import { ChangeEvent, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button, Field, TextInput, Topbar } from '../components/ui'
 import { CLOUD_API_URL } from '../config'
-import { resetAllData } from '../db'
+import { getOrCreateProfile, resetAllData } from '../db'
+import { isValidEmail, normalizeEmail, setUnlocked } from '../auth'
 import {
   backupFileName,
   downloadTextFile,
@@ -11,10 +13,22 @@ import {
   serializeBackup,
   shareBackupFile,
 } from '../services/backup'
-import { forgetServer, getServerRegistration, pairAndSync, syncNow } from '../services/lanSync'
-import type { ServerRegistration } from '../types'
+import {
+  describeSync,
+  fetchDeviceStatus,
+  forgetServer,
+  getAllowMobileData,
+  getServerRegistration,
+  pairAndSync,
+  setAllowMobileData,
+  syncAllowedOnCurrentNetwork,
+  syncNow,
+} from '../services/lanSync'
+import type { AppModeName, ServerRegistration } from '../types'
+import { getAppMode } from '../services/appMode'
 
 export function BackupScreen() {
+  const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,14 +36,67 @@ export function BackupScreen() {
   const [pairOpen, setPairOpen] = useState(false)
   const [code, setCode] = useState('')
   const [server, setServer] = useState<ServerRegistration | undefined>()
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [userEmail, setUserEmail] = useState('')
+  const [allowMobile, setAllowMobile] = useState(false)
+  const [mode, setMode] = useState<AppModeName | undefined>()
 
   async function refreshServer() {
-    setServer(await getServerRegistration())
+    const [registration, profile, status, mobile, appMode] = await Promise.all([
+      getServerRegistration(),
+      getOrCreateProfile(),
+      fetchDeviceStatus(),
+      getAllowMobileData(),
+      getAppMode(),
+    ])
+    setServer(registration)
+    setUserEmail(normalizeEmail(profile.email))
+    setAllowMobile(mobile)
+    setMode(appMode?.mode)
+    if (status) setEnabled(status.enabled)
+    else setEnabled(registration ? null : false)
+    return status
   }
 
   useEffect(() => {
     void refreshServer()
   }, [])
+
+  useEffect(() => {
+    if (!server || enabled !== false) return
+    const timer = window.setInterval(() => {
+      void (async () => {
+        const status = await fetchDeviceStatus()
+        if (!status) return
+        if (status.passwordReset) {
+          navigate('/cadastro', { replace: true })
+          return
+        }
+        if (status.enabled) {
+          setEnabled(true)
+          const network = await syncAllowedOnCurrentNetwork()
+          if (!network.ok) {
+            setMessage('Liberado pelo admin. A sincronização espera o Wi-Fi (ou permita dados móveis abaixo).')
+            return
+          }
+          setBusy(true)
+          try {
+            const result = await syncNow()
+            if (result.passwordReset) {
+              navigate('/cadastro', { replace: true })
+              return
+            }
+            setMessage(`Liberado pelo admin. ${describeSync(result)}`)
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Falha ao sincronizar após a liberação')
+          } finally {
+            setBusy(false)
+          }
+        }
+      })()
+    }, 8000)
+    return () => window.clearInterval(timer)
+  }, [server, enabled, navigate])
 
   async function generate() {
     setError('')
@@ -92,16 +159,36 @@ export function BackupScreen() {
 
   async function confirmPair() {
     setError('')
+    if (!isValidEmail(userEmail)) {
+      setError('Conclua o cadastro com um e-mail válido. Ele identifica o usuário para o admin.')
+      return
+    }
     setBusy(true)
     try {
       const result = await pairAndSync(code)
       setPairOpen(false)
       setCode('')
       await refreshServer()
-      setMessage(
-        `Nuvem cadastrada. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
-          `${result.newProducts} produto(s) novo(s) no celular.`,
-      )
+      if (result.passwordReset) {
+        navigate('/cadastro', { replace: true })
+        return
+      }
+      if (result.pending) {
+        setEnabled(false)
+        setMessage(
+          `Nuvem cadastrada para ${userEmail}. O admin precisa liberar este e-mail antes do sincronismo.`,
+        )
+        return
+      }
+      if (result.deferred) {
+        setEnabled(true)
+        setMessage(
+          `Nuvem cadastrada e liberada. A sincronização espera o Wi-Fi (ou permita dados móveis nesta tela).`,
+        )
+        return
+      }
+      setEnabled(true)
+      setMessage(`Nuvem cadastrada e liberada. ${describeSync(result)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao cadastrar a nuvem')
     } finally {
@@ -114,14 +201,31 @@ export function BackupScreen() {
     setBusy(true)
     try {
       const result = await syncNow()
-      setMessage(
-        `Sincronizado. Backup: ${result.clients} cliente(s) e ${result.ledger} lançamento(s). ` +
-          `${result.newProducts} produto(s) novo(s) no celular.`,
-      )
+      if (result.passwordReset) {
+        navigate('/cadastro', { replace: true })
+        return
+      }
+      setEnabled(true)
+      setMessage(describeSync(result))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao sincronizar')
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function changeSyncNetwork(allow: boolean) {
+    setAllowMobile(allow)
+    setError('')
+    try {
+      await setAllowMobileData(allow)
+      setMessage(
+        allow
+          ? 'Sincronização permitida no Wi-Fi e nos dados móveis.'
+          : 'Sincronização só no Wi-Fi. Fora da rede, o aplicativo continua com os dados deste aparelho.',
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar a preferência de rede')
     }
   }
 
@@ -131,6 +235,7 @@ export function BackupScreen() {
     try {
       await forgetServer()
       await refreshServer()
+      setEnabled(false)
       setMessage('Celular desconectado da nuvem. Os dados locais foram mantidos.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível desconectar')
@@ -144,9 +249,11 @@ export function BackupScreen() {
     setBusy(true)
     try {
       await resetAllData()
-      setResetOpen(false)
       setServer(undefined)
-      setMessage('Configurações restauradas. Todos os dados foram apagados.')
+      setEnabled(false)
+      setUnlocked(false)
+      setResetOpen(false)
+      navigate('/cadastro', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível apagar os dados')
     } finally {
@@ -154,14 +261,35 @@ export function BackupScreen() {
     }
   }
 
-  const registered = Boolean(server)
+  const standalone = mode === 'stand_alone' || !mode
+  const registered = Boolean(server) && !standalone
+  const pending = registered && enabled === false
 
   return (
     <main>
       <Topbar title="Backup e sincronização" backTo="/menu" />
-      <p className={`server-status ${registered ? 'is-on' : 'is-off'}`}>
-        {registered ? 'Nuvem cadastrada' : 'Nenhuma nuvem cadastrada'}
+      <p className={`server-status ${registered && enabled ? 'is-on' : 'is-off'}`}>
+        {standalone
+          ? 'Stand alone · backup só por arquivo'
+          : !registered
+            ? 'Nenhuma nuvem cadastrada'
+            : pending
+              ? 'Aguardando sincronização'
+              : enabled
+                ? 'Nuvem ativa'
+                : 'Nuvem cadastrada'}
       </p>
+      {userEmail ? (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Usuário do aplicativo: {userEmail}
+        </p>
+      ) : (
+        <p className="muted" style={{ marginTop: 0 }}>
+          Sem e-mail no cadastro. O admin identifica o usuário pelo e-mail.
+        </p>
+      )}
+      {!standalone ? (
+      <>
       {registered ? (
         <p className="muted" style={{ marginTop: 0 }}>
           HTTPS/JSON · {server?.baseUrl}
@@ -172,39 +300,59 @@ export function BackupScreen() {
         </p>
       )}
 
-      {!registered ? (
-        <section className="card stack">
-          <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Servidor na nuvem</h2>
-          <p className="muted">
-            Cadastre este celular na API HTTPS para enviar clientes e lançamentos (JSON) e receber
-            produtos que ainda não estão neste aparelho.
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => {
-              setError('')
-              setMessage('')
-              setCode('')
-              setPairOpen(true)
-            }}
-            disabled={busy}
-          >
-            Cadastrar nuvem
-          </Button>
-        </section>
-      ) : (
-        <section className="card stack">
+      <section className="card stack">
+        <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Rede para sincronizar</h2>
+        <p className="muted">
+          Clientes, produtos e lançamentos ficam neste aparelho mesmo sem internet. A nuvem só é
+          usada na rede que você escolher.
+        </p>
+        <div className="choice-list" role="radiogroup" aria-label="Rede para sincronizar">
+          <label className={`choice ${!allowMobile ? 'is-on' : ''}`}>
+            <input
+              type="radio"
+              name="sync-network"
+              checked={!allowMobile}
+              onChange={() => void changeSyncNetwork(false)}
+            />
+            <span>
+              Somente Wi-Fi
+              <small>Não usa o pacote de dados móveis</small>
+            </span>
+          </label>
+          <label className={`choice ${allowMobile ? 'is-on' : ''}`}>
+            <input
+              type="radio"
+              name="sync-network"
+              checked={allowMobile}
+              onChange={() => void changeSyncNetwork(true)}
+            />
+            <span>
+              Wi-Fi e dados móveis
+              <small>Sincroniza também pelo 4G/5G</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      {registered ? (
+        <section className="card stack" style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--serif)', margin: 0, fontSize: '1.15rem' }}>Sincronização</h2>
           <p className="muted">
-            Envia o cadastro local em JSON e baixa produtos novos do catálogo na nuvem.
+            {mode === 'group'
+              ? 'O catálogo de produtos é compartilhado na empresa. Clientes e lançamentos são só deste usuário.'
+              : 'Backup automático na nuvem só desta conta. Clientes e lançamentos não são compartilhados.'}
           </p>
-          <Button variant="primary" onClick={() => void confirmSync()} disabled={busy}>
+          <Button variant="primary" onClick={() => void confirmSync()} disabled={busy || pending}>
             Sincronizar agora
           </Button>
           <Button variant="ghost" onClick={() => void confirmForget()} disabled={busy}>
             Desconectar nuvem
           </Button>
         </section>
+      ) : null}
+      </>
+      ) : (
+        <p className="muted">Neste modo o backup é só o arquivo JSON abaixo.</p>
       )}
 
       <section className="card stack" style={{ marginTop: 14 }}>
@@ -254,7 +402,10 @@ export function BackupScreen() {
             <h2 id="pair-title" style={{ fontFamily: 'var(--serif)', marginTop: 0 }}>
               Cadastrar nuvem
             </h2>
-            <p className="muted">Use o código de 6 dígitos da página do servidor na nuvem.</p>
+            <p className="muted">
+              Use o código de 6 dígitos da página do admin. O e-mail {userEmail || 'deste cadastro'}{' '}
+              identifica o usuário. A sincronização só começa depois da liberação manual.
+            </p>
             <Field label="Código do servidor">
               <TextInput
                 inputMode="numeric"

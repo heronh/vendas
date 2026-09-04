@@ -1,0 +1,62 @@
+{{template "head" .}}
+<div class="wrap">
+{{template "header" .}}
+{{template "nav" .}}
+
+    <div class="callout callout-stop">
+      O administrador não lança venda nem registra pagamento. Para alterar o saldo, use o celular da profissional.
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <strong>Saldo devedor</strong>
+        <span>{{.Balance}}</span>
+      </div>
+      <div class="card">
+        <strong>Vendas</strong>
+        <span>{{.SalesTotal}}</span>
+      </div>
+      <div class="card">
+        <strong>Pagamentos</strong>
+        <span>{{.PaymentsTotal}}</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Cadastro</h2>
+      <p>{{.Contact}}</p>
+      <p class="muted">Campos bloqueados nesta tela. Edição permanece no aparelho.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Histórico</h2>
+      {{if .Ledger}}
+      <div class="overflow-x">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Quando</th>
+            <th>Tipo</th>
+            <th>Detalhe</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Ledger}}
+          <tr>
+            <td>{{.When}}</td>
+            <td>{{.Kind}}</td>
+            <td>{{.Detail}}</td>
+            <td>{{.Amount}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div>
+      {{else}}
+      <p class="muted">Nenhum lançamento neste cadastro.</p>
+      {{end}}
+    </div>
+</div>
+</body>
+</html>
