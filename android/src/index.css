@@ -124,6 +124,27 @@ a {
   padding-top: 32px;
 }
 
+.sync-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 10px 14px calc(10px + env(safe-area-inset-top));
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sync-banner.is-ok {
+  background: #e8f5e9;
+  color: var(--ok);
+}
+
+.sync-banner.is-err {
+  background: #fdecea;
+  color: var(--rose);
+}
+
 .topbar {
   display: flex;
   align-items: center;

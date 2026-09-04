@@ -148,6 +148,7 @@ func main() {
 	mux.HandleFunc("/products", s.handleProducts)
 	mux.HandleFunc("/healthz", s.handleHealth)
 	mux.HandleFunc("/health", s.handleHealth)
+	mux.HandleFunc("/api/ready", s.handleReady)
 	mux.HandleFunc("/api/discover", s.handleDiscover)
 	mux.HandleFunc("/api/pair", s.handlePair)
 	mux.HandleFunc("/api/sync", s.handleSync)
@@ -232,6 +233,12 @@ CREATE TABLE IF NOT EXISTS device_tokens (
   token TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS clients_full_name_idx ON clients (full_name);
+CREATE INDEX IF NOT EXISTS products_barcode_idx ON products (barcode);
+CREATE INDEX IF NOT EXISTS sales_client_id_idx ON sales (client_id);
+CREATE INDEX IF NOT EXISTS sales_occurred_at_idx ON sales (occurred_at);
+CREATE INDEX IF NOT EXISTS payments_client_id_idx ON payments (client_id);
+CREATE INDEX IF NOT EXISTS payments_occurred_at_idx ON payments (occurred_at);
 `)
 	return err
 }
@@ -347,6 +354,34 @@ func (s *server) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *server) handleReady(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if err := s.db.PingContext(ctx); err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "banco indisponível"})
+		return
+	}
+	rows, err := s.db.QueryContext(ctx, `
+SELECT tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename`)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+	tables := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		tables = append(tables, name)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "database": true, "tables": tables})
+}
+
 func (s *server) handlePair(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"ok": false, "error": "método inválido"})
@@ -407,7 +442,28 @@ func (s *server) handleSync(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "products": products})
+	clients, err := listClients(ctx, s.db)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	sales, err := listSales(ctx, s.db)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	payments, err := listPayments(ctx, s.db)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":       true,
+		"products": products,
+		"clients":  clients,
+		"sales":    sales,
+		"payments": payments,
+	})
 }
 
 func (s *server) authorize(r *http.Request, bodyToken, code string) bool {
@@ -620,6 +676,83 @@ ORDER BY description ASC`)
 	}
 	if out == nil {
 		out = []Product{}
+	}
+	return out, rows.Err()
+}
+
+func listClients(ctx context.Context, db *sql.DB) ([]Client, error) {
+	rows, err := db.QueryContext(ctx, `
+SELECT id, full_name, trade_name, company, phone, email, cep, street, neighborhood, city, state, number, complement, created_at, updated_at
+FROM clients
+ORDER BY full_name ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Client
+	for rows.Next() {
+		var item Client
+		if err := rows.Scan(&item.ID, &item.FullName, &item.TradeName, &item.Company, &item.Phone, &item.Email, &item.CEP, &item.Street, &item.Neighborhood, &item.City, &item.State, &item.Number, &item.Complement, &item.CreatedAt, &item.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, item)
+	}
+	if out == nil {
+		out = []Client{}
+	}
+	return out, rows.Err()
+}
+
+func listSales(ctx context.Context, db *sql.DB) ([]Sale, error) {
+	rows, err := db.QueryContext(ctx, `
+SELECT id, client_id, product_id, product_description, quantity, unit_price_cents, total_cents, occurred_at, created_at
+FROM sales
+ORDER BY occurred_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Sale
+	for rows.Next() {
+		var item Sale
+		var productID sql.NullString
+		if err := rows.Scan(&item.ID, &item.ClientID, &productID, &item.ProductDescription, &item.Quantity, &item.UnitPriceCents, &item.TotalCents, &item.OccurredAt, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		if productID.Valid && productID.String != "" {
+			item.ProductID = &productID.String
+		}
+		out = append(out, item)
+	}
+	if out == nil {
+		out = []Sale{}
+	}
+	return out, rows.Err()
+}
+
+func listPayments(ctx context.Context, db *sql.DB) ([]Payment, error) {
+	rows, err := db.QueryContext(ctx, `
+SELECT id, client_id, amount_cents, occurred_at, notes, created_at
+FROM payments
+ORDER BY occurred_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Payment
+	for rows.Next() {
+		var item Payment
+		var notes sql.NullString
+		if err := rows.Scan(&item.ID, &item.ClientID, &item.AmountCents, &item.OccurredAt, &notes, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		if notes.Valid {
+			item.Notes = &notes.String
+		}
+		out = append(out, item)
+	}
+	if out == nil {
+		out = []Payment{}
 	}
 	return out, rows.Err()
 }

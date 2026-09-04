@@ -10,6 +10,7 @@ import {
   toDatetimeLocalValue,
 } from '../format'
 import type { Client, LedgerEntry, Payment, Sale } from '../types'
+import { pushAndNotify } from '../services/lanSync'
 
 export function AccountScreen() {
   const { id } = useParams()
@@ -71,14 +72,20 @@ export function AccountScreen() {
       setError('Informe um valor de pagamento')
       return
     }
-    await db.payments.add({
+    const payment: Payment = {
       id: newId(),
       clientId: id,
       amountCents: cents,
       occurredAt: fromDatetimeLocalValue(when),
       notes: notes.trim() || undefined,
       createdAt: Date.now(),
-    })
+    }
+    await db.payments.add(payment)
+    try {
+      await pushAndNotify({ payments: [payment] }, 'Pagamento gravado no banco')
+    } catch {
+      /* banner já exibe o erro */
+    }
     setAmount('')
     setNotes('')
     setWhen(toDatetimeLocalValue(Date.now()))

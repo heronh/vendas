@@ -4,6 +4,7 @@ import { ScannerModal } from '../components/ScannerModal'
 import { Button, Field, Topbar } from '../components/ui'
 import { db, newId } from '../db'
 import { centsToInput, parseMoneyToCents, resizeImage } from '../format'
+import { pushAndNotify } from '../services/lanSync'
 import type { Product } from '../types'
 
 const empty = {
@@ -81,6 +82,11 @@ export function ProductFormScreen() {
       await db.products.put(payload)
     } else {
       await db.products.add(payload)
+    }
+    try {
+      await pushAndNotify({ products: [payload] }, 'Produto gravado no banco')
+    } catch {
+      /* banner já exibe o erro */
     }
     navigate('/produtos')
   }

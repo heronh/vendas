@@ -4,6 +4,7 @@ import { Button, Field, Topbar } from '../components/ui'
 import { db, newId } from '../db'
 import { formatCep } from '../format'
 import { lookupCep } from '../services/cep'
+import { pushAndNotify } from '../services/lanSync'
 import type { Client } from '../types'
 
 const empty: Omit<Client, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -81,14 +82,26 @@ export function ClientFormScreen() {
         setError('Cliente não encontrado')
         return
       }
-      await db.clients.put({ ...current, ...form, updatedAt: now })
+      const saved = { ...current, ...form, updatedAt: now }
+      await db.clients.put(saved)
+      try {
+        await pushAndNotify({ clients: [saved] }, 'Cliente gravado no banco')
+      } catch {
+        /* banner já exibe o erro */
+      }
     } else {
-      await db.clients.add({
+      const saved: Client = {
         ...form,
         id: newId(),
         createdAt: now,
         updatedAt: now,
-      })
+      }
+      await db.clients.add(saved)
+      try {
+        await pushAndNotify({ clients: [saved] }, 'Cliente gravado no banco')
+      } catch {
+        /* banner já exibe o erro */
+      }
     }
     navigate('/clientes')
   }

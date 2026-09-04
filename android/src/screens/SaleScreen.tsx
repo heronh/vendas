@@ -4,6 +4,7 @@ import { ScannerModal } from '../components/ScannerModal'
 import { Button, Field, Topbar } from '../components/ui'
 import { db, newId } from '../db'
 import { centsToInput, formatBRL, fromDatetimeLocalValue, parseMoneyToCents, toDatetimeLocalValue } from '../format'
+import { pushAndNotify } from '../services/lanSync'
 import type { Client, Product } from '../types'
 
 export function SaleScreen() {
@@ -78,7 +79,7 @@ export function SaleScreen() {
       setError('Quantidade deve ser maior que zero')
       return
     }
-    await db.sales.add({
+    const sale = {
       id: newId(),
       clientId: id,
       productId: product?.id,
@@ -88,7 +89,13 @@ export function SaleScreen() {
       totalCents,
       occurredAt: fromDatetimeLocalValue(when),
       createdAt: Date.now(),
-    })
+    }
+    await db.sales.add(sale)
+    try {
+      await pushAndNotify({ sales: [sale] }, 'Venda gravada no banco')
+    } catch {
+      /* banner já exibe o erro; o lançamento permanece neste aparelho */
+    }
     navigate(`/clientes/${id}/resumo`)
   }
 
