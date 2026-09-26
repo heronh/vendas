@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Field, TextInput } from '../components/ui'
+import { isDemo } from '../demo'
 import {
   chooseConnected,
   chooseStandalone,
@@ -30,7 +31,7 @@ export function ModeScreen() {
     setError('')
     try {
       await chooseStandalone()
-      navigate('/cobranca', { replace: true })
+      navigate(isDemo ? '/menu' : '/cobranca', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao gravar o modo')
     } finally {
@@ -93,17 +94,25 @@ export function ModeScreen() {
           <Button variant="primary" disabled={busy} onClick={() => void goStandalone()}>
             Stand alone
           </Button>
-          <p className="hint">Sem backup na nuvem. Você exporta e importa arquivos JSON.</p>
-          <Button variant="navy" disabled={busy} onClick={() => void goConnected()}>
-            Usuário conectado
-          </Button>
-          <p className="hint">Backup automático na nuvem, só dos seus dados.</p>
-          <Button variant="ghost" disabled={busy} onClick={() => setStep('company')}>
-            Criar grupo (empresa)
-          </Button>
-          <Button variant="ghost" disabled={busy} onClick={() => setStep('join')}>
-            Entrar em um grupo
-          </Button>
+          <p className="hint">
+            {isDemo
+              ? 'Demonstração neste navegador. Você exporta e importa arquivos JSON.'
+              : 'Sem backup na nuvem. Você exporta e importa arquivos JSON.'}
+          </p>
+          {isDemo ? null : (
+            <>
+              <Button variant="navy" disabled={busy} onClick={() => void goConnected()}>
+                Usuário conectado
+              </Button>
+              <p className="hint">Backup automático na nuvem, só dos seus dados.</p>
+              <Button variant="ghost" disabled={busy} onClick={() => setStep('company')}>
+                Criar grupo (empresa)
+              </Button>
+              <Button variant="ghost" disabled={busy} onClick={() => setStep('join')}>
+                Entrar em um grupo
+              </Button>
+            </>
+          )}
           {createdSig ? <p className="ok">Assinatura da empresa: {createdSig}</p> : null}
         </div>
       ) : null}

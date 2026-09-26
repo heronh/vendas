@@ -1,5 +1,6 @@
 import { isValidEmail, normalizeEmail, setPassword } from '../auth'
 import { CLOUD_API_URL } from '../config'
+import { isDemo } from '../demo'
 import { db, getOrCreateProfile } from '../db'
 import type { AppModeName, AppModeSetting, CompanyProfileSetting, ServerRegistration } from '../types'
 
@@ -110,6 +111,18 @@ export async function applyAccountStatus(data: AccountStatus, baseUrl = CLOUD_AP
 }
 
 export async function chooseStandalone(): Promise<void> {
+  if (isDemo) {
+    await saveAppMode({
+      mode: 'stand_alone',
+      companyId: '',
+      signature: '',
+      companyName: '',
+      role: '',
+      licenseStatus: 'paid',
+      updatedAt: Date.now(),
+    })
+    return
+  }
   await postMode('/api/mode/standalone')
 }
 

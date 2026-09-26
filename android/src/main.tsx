@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './index.css'
 
+document.documentElement.style.setProperty('--mark-logo', `url("${import.meta.env.BASE_URL}logo.jpeg")`)
+
 async function registerAndroidBackButton() {
   if (!Capacitor.isNativePlatform()) return
   const { App: CapApp } = await import('@capacitor/app')

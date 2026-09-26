@@ -19,7 +19,10 @@ import { RegisterScreen } from './screens/RegisterScreen'
 import { ReportsScreen } from './screens/ReportsScreen'
 import { SaleScreen } from './screens/SaleScreen'
 import { SplashScreen } from './screens/SplashScreen'
+import { seedDemoIfEmpty } from './demo'
 import { getAppMode, licenseAllows } from './services/appMode'
+
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
 
 function RequireSession({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'load' | 'login' | 'register' | 'ok'>('load')
@@ -45,11 +48,19 @@ function RequireLicense({ children }: { children: ReactNode }) {
   const [gate, setGate] = useState<'load' | 'mode' | 'pay' | 'ok'>('load')
 
   useEffect(() => {
-    void getAppMode().then((mode) => {
+    let cancelled = false
+    void (async () => {
+      await seedDemoIfEmpty()
+      if (cancelled) return
+      const mode = await getAppMode()
+      if (cancelled) return
       if (!mode) setGate('mode')
       else if (!licenseAllows(mode) && !OPEN_PATHS.has(location.pathname)) setGate('pay')
       else setGate('ok')
-    })
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [location.pathname])
 
   if (gate === 'load') return null
@@ -60,7 +71,7 @@ function RequireLicense({ children }: { children: ReactNode }) {
 
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route

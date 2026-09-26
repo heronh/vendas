@@ -123,6 +123,11 @@ export interface AppLock {
   updatedAt: number
 }
 
+export interface DemoSeedSetting {
+  id: 'demo-seeded'
+  seededAt: number
+}
+
 export type AppSetting =
   | ServerRegistration
   | WifiMemory
@@ -130,6 +135,7 @@ export type AppSetting =
   | AppLock
   | AppModeSetting
   | CompanyProfileSetting
+  | DemoSeedSetting
 
 export type ReportPeriod = '30d' | 'month'
 

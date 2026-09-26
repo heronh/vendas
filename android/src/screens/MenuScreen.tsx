@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuLink } from '../components/ui'
+import { isDemo } from '../demo'
 import { getAppMode, licenseAllows, refreshAccountStatus } from '../services/appMode'
 import { syncIfApproved } from '../services/lanSync'
 import produtoIcon from '../../../docs/produto.svg'
@@ -12,6 +13,7 @@ export function MenuScreen() {
   const [signature, setSignature] = useState('')
 
   useEffect(() => {
+    if (isDemo) return
     let cancelled = false
     async function boot() {
       const mode = await getAppMode()
@@ -98,7 +100,7 @@ export function MenuScreen() {
           to="/backup"
           icon="💾"
           title="Backup"
-          subtitle="Arquivo local ou nuvem, conforme o modo"
+          subtitle={isDemo ? 'Exportar e importar arquivo JSON' : 'Arquivo local ou nuvem, conforme o modo'}
         />
         <MenuLink
           to="/perfil"

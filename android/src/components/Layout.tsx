@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { isDemo } from '../demo'
 
 type SyncNotice = { ok: boolean; text: string }
 
@@ -25,6 +26,11 @@ export function Layout() {
   return (
     <div className="app-shell">
       <div className="watermark" aria-hidden />
+      {isDemo ? (
+        <p className="sync-banner is-demo" role="status">
+          Os dados desta demonstração ficam neste navegador.
+        </p>
+      ) : null}
       {notice ? (
         <p className={`sync-banner ${notice.ok ? 'is-ok' : 'is-err'}`} role="status">
           {notice.text}

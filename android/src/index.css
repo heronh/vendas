@@ -73,7 +73,7 @@ a {
   z-index: 0;
   pointer-events: none;
   background:
-    url('/logo.jpeg') center 42% / min(72vw, 340px) no-repeat;
+    var(--mark-logo) center 42% / min(72vw, 340px) no-repeat;
   opacity: 0.09;
   filter: grayscale(0.15);
 }
@@ -143,6 +143,11 @@ a {
 .sync-banner.is-err {
   background: #fdecea;
   color: var(--rose);
+}
+
+.sync-banner.is-demo {
+  background: #fff8e6;
+  color: #5c4318;
 }
 
 .splash-login {

@@ -1,5 +1,6 @@
 import { DEFAULT_PASSWORD, isDefaultPassword, isValidEmail, normalizeEmail, setPassword } from '../auth'
 import { CLOUD_API_URL } from '../config'
+import { isDemo } from '../demo'
 import { db, getOrCreateProfile } from '../db'
 import type { Client, Payment, Product, Sale, ServerRegistration, SyncNetworkSetting } from '../types'
 import { getNetworkTransport } from './wifi'
@@ -223,6 +224,7 @@ async function applyPasswordResetFlag(reset: boolean): Promise<void> {
 }
 
 export async function checkCloudPasswordReset(): Promise<boolean> {
+  if (isDemo) return false
   const registration = await getServerRegistration()
   if (!registration?.token || !registration.baseUrl) return false
   try {
@@ -469,6 +471,7 @@ export async function syncNow(): Promise<Omit<SyncResult, 'registration' | 'pend
 }
 
 export async function syncIfApproved(): Promise<'pending' | 'synced' | 'skipped' | 'reset'> {
+  if (isDemo) return 'skipped'
   const modeRow = await db.settings.get('app-mode')
   const mode = modeRow?.id === 'app-mode' ? modeRow.mode : undefined
   if (mode === 'stand_alone' || !mode) return 'skipped'
@@ -526,6 +529,15 @@ export async function probeDatabase(): Promise<string[]> {
 }
 
 export async function connectAndSync(): Promise<SyncCounts> {
+  if (isDemo) {
+    const [clients, products, sales, payments] = await Promise.all([
+      db.clients.count(),
+      db.products.count(),
+      db.sales.count(),
+      db.payments.count(),
+    ])
+    return { clients, products, ledger: sales + payments }
+  }
   await probeDatabase()
   const outcome = await syncIfApproved()
   if (outcome === 'pending') {
@@ -545,6 +557,7 @@ export async function pushChanges(_partial?: CloudSnapshot): Promise<void> {
 }
 
 export async function pushAndNotify(partial: CloudSnapshot, success: string): Promise<void> {
+  if (isDemo) return
   try {
     await pushChanges(partial)
     notifyCloudSync(true, success)

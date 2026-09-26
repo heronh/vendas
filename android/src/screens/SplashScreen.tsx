@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { checkCloudPasswordReset, connectAndSync } from '../services/lanSync'
 import { confirmPasswordReset, requestPasswordReset } from '../services/appMode'
 import { Button, Field, TextInput } from '../components/ui'
+import { isDemo } from '../demo'
 import { DEFAULT_PASSWORD, checkPassword, isDefaultPassword, isUnlocked, isValidEmail, normalizeEmail, setPassword, setUnlocked } from '../auth'
 import { getOrCreateProfile } from '../db'
 
@@ -20,13 +21,15 @@ export function SplashScreen() {
   useEffect(() => {
     let cancelled = false
     async function boot() {
-      const reset = await checkCloudPasswordReset()
-      if (cancelled) return
-      if (reset) {
-        await setPassword(DEFAULT_PASSWORD)
-        setUnlocked(false)
-        navigate('/cadastro', { replace: true })
-        return
+      if (!isDemo) {
+        const reset = await checkCloudPasswordReset()
+        if (cancelled) return
+        if (reset) {
+          await setPassword(DEFAULT_PASSWORD)
+          setUnlocked(false)
+          navigate('/cadastro', { replace: true })
+          return
+        }
       }
       const def = await isDefaultPassword()
       if (cancelled) return
@@ -35,10 +38,12 @@ export function SplashScreen() {
         return
       }
       if (isUnlocked()) {
-        try {
-          await connectAndSync()
-        } catch {
-          /* segue ao menu mesmo se a nuvem falhar; o erro aparece abaixo se ainda estiver nesta tela */
+        if (!isDemo) {
+          try {
+            await connectAndSync()
+          } catch {
+            /* segue ao menu mesmo se a nuvem falhar; o erro aparece abaixo se ainda estiver nesta tela */
+          }
         }
         if (cancelled) return
         navigate('/menu', { replace: true })
@@ -75,10 +80,12 @@ export function SplashScreen() {
         return
       }
       setUnlocked(true)
-      try {
-        await connectAndSync()
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao conectar ao banco')
+      if (!isDemo) {
+        try {
+          await connectAndSync()
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Falha ao conectar ao banco')
+        }
       }
       navigate('/menu', { replace: true })
     } finally {
@@ -89,7 +96,7 @@ export function SplashScreen() {
   return (
     <main className="splash">
       <div className="splash-kicker">Beauty Brasil SJC</div>
-      <img className="splash-logo" src="/logo.jpeg" alt="Logo Beauty Brasil" />
+      <img className="splash-logo" src={`${import.meta.env.BASE_URL}logo.jpeg`} alt="Logo Beauty Brasil" />
       <h1>Controle de Vendas</h1>
       <p>Gestão Offline</p>
       <p className="muted">Estética e bem-estar · São José dos Campos</p>
@@ -161,17 +168,19 @@ export function SplashScreen() {
           <Button variant="primary" type="submit" disabled={busy}>
             Entrar
           </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              setForgot(true)
-              void getOrCreateProfile().then((p) => setEmail(p.email))
-            }}
-          >
-            Esqueci a senha
-          </Button>
+          {isDemo ? null : (
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setForgot(true)
+                void getOrCreateProfile().then((p) => setEmail(p.email))
+              }}
+            >
+              Esqueci a senha
+            </Button>
+          )}
         </form>
       )}
     </main>

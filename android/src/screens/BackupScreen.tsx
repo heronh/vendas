@@ -2,6 +2,7 @@ import { ChangeEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Field, TextInput, Topbar } from '../components/ui'
 import { CLOUD_API_URL } from '../config'
+import { isDemo } from '../demo'
 import { getOrCreateProfile, resetAllData } from '../db'
 import { isValidEmail, normalizeEmail, setUnlocked } from '../auth'
 import {
@@ -42,6 +43,14 @@ export function BackupScreen() {
   const [mode, setMode] = useState<AppModeName | undefined>()
 
   async function refreshServer() {
+    if (isDemo) {
+      const profile = await getOrCreateProfile()
+      setUserEmail(normalizeEmail(profile.email))
+      setMode('stand_alone')
+      setServer(undefined)
+      setEnabled(false)
+      return
+    }
     const [registration, profile, status, mobile, appMode] = await Promise.all([
       getServerRegistration(),
       getOrCreateProfile(),
@@ -63,7 +72,7 @@ export function BackupScreen() {
   }, [])
 
   useEffect(() => {
-    if (!server || enabled !== false) return
+    if (isDemo || !server || enabled !== false) return
     const timer = window.setInterval(() => {
       void (async () => {
         const status = await fetchDeviceStatus()
@@ -261,13 +270,13 @@ export function BackupScreen() {
     }
   }
 
-  const standalone = mode === 'stand_alone' || !mode
+  const standalone = isDemo || mode === 'stand_alone' || !mode
   const registered = Boolean(server) && !standalone
   const pending = registered && enabled === false
 
   return (
     <main>
-      <Topbar title="Backup e sincronização" backTo="/menu" />
+      <Topbar title={isDemo ? 'Backup' : 'Backup e sincronização'} backTo="/menu" />
       <p className={`server-status ${registered && enabled ? 'is-on' : 'is-off'}`}>
         {standalone
           ? 'Stand alone · backup só por arquivo'
