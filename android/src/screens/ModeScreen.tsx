@@ -96,7 +96,7 @@ export function ModeScreen() {
           </Button>
           <p className="hint">
             {isDemo
-              ? 'Demonstração neste navegador. Você exporta e importa arquivos JSON.'
+              ? 'Demonstração neste navegador. Os dados ficam só aqui.'
               : 'Sem backup na nuvem. Você exporta e importa arquivos JSON.'}
           </p>
           {isDemo ? null : (

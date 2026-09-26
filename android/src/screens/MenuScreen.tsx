@@ -96,12 +96,14 @@ export function MenuScreen() {
           title="Relatórios"
           subtitle="Vendas, pagamentos e rankings"
         />
-        <MenuLink
-          to="/backup"
-          icon="💾"
-          title="Backup"
-          subtitle={isDemo ? 'Exportar e importar arquivo JSON' : 'Arquivo local ou nuvem, conforme o modo'}
-        />
+        {isDemo ? null : (
+          <MenuLink
+            to="/backup"
+            icon="💾"
+            title="Backup"
+            subtitle="Arquivo local ou nuvem, conforme o modo"
+          />
+        )}
         <MenuLink
           to="/perfil"
           icon="👤"

@@ -19,7 +19,7 @@ import { RegisterScreen } from './screens/RegisterScreen'
 import { ReportsScreen } from './screens/ReportsScreen'
 import { SaleScreen } from './screens/SaleScreen'
 import { SplashScreen } from './screens/SplashScreen'
-import { seedDemoIfEmpty } from './demo'
+import { isDemo, seedDemoIfEmpty } from './demo'
 import { getAppMode, licenseAllows } from './services/appMode'
 
 const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
@@ -129,7 +129,7 @@ export function App() {
           <Route path="/produtos/novo" element={<ProductFormScreen />} />
           <Route path="/produtos/:id/editar" element={<ProductFormScreen />} />
           <Route path="/relatorios" element={<ReportsScreen />} />
-          <Route path="/backup" element={<BackupScreen />} />
+          <Route path="/backup" element={isDemo ? <Navigate to="/menu" replace /> : <BackupScreen />} />
           <Route path="/perfil" element={<ProfileScreen />} />
           <Route path="/ajuda" element={<HelpScreen />} />
           <Route path="/administracao" element={<GroupAdminScreen />} />
