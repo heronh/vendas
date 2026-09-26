@@ -150,6 +150,22 @@ a {
   color: #5c4318;
 }
 
+.demo-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  gap: 8px;
+  margin: -16px -16px 16px;
+  padding: 0 16px 12px;
+  background: rgba(244, 239, 230, 0.96);
+}
+
+.demo-bar .sync-banner {
+  position: static;
+  margin: 0 -16px;
+}
+
 .splash-login {
   text-align: left;
   display: grid;

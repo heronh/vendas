@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
+import { setUnlocked } from '../auth'
 import { isDemo } from '../demo'
 
 type SyncNotice = { ok: boolean; text: string }
 
 export function Layout() {
+  const navigate = useNavigate()
   const [notice, setNotice] = useState<SyncNotice | null>(null)
+
+  function logout() {
+    setUnlocked(false)
+    navigate('/', { replace: true })
+  }
 
   useEffect(() => {
     const onSync = (event: Event) => {
@@ -27,9 +34,14 @@ export function Layout() {
     <div className="app-shell">
       <div className="watermark" aria-hidden />
       {isDemo ? (
-        <p className="sync-banner is-demo" role="status">
-          Os dados desta demonstração ficam neste navegador.
-        </p>
+        <div className="demo-bar">
+          <p className="sync-banner is-demo" role="status">
+            Os dados desta demonstração ficam neste navegador.
+          </p>
+          <button type="button" className="btn btn-ghost" onClick={logout}>
+            Sair
+          </button>
+        </div>
       ) : null}
       {notice ? (
         <p className={`sync-banner ${notice.ok ? 'is-ok' : 'is-err'}`} role="status">
