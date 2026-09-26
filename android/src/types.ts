@@ -128,6 +128,19 @@ export interface DemoSeedSetting {
   seededAt: number
 }
 
+export type DemoRole = 'admin' | 'colaborador'
+
+export interface DemoUser {
+  id: string
+  username: string
+  displayName: string
+  passwordHash: string
+  role: DemoRole
+  blocked: boolean
+  fixed: boolean
+  createdAt: number
+}
+
 export type AppSetting =
   | ServerRegistration
   | WifiMemory

@@ -1,0 +1,14 @@
+---
+description: O acesso do projeto é mobile first, mesmo na versão web
+alwaysApply: true
+---
+
+# Acesso mobile first
+
+O site é web, mas o uso é no celular. Telas novas e alterações de interface nascem para uma coluna de telefone.
+
+- Manter o shell numa coluna de até 480px, como em `android/src/index.css`. No desktop, essa coluna fica centralizada.
+- Formulários em uma coluna. Botões e campos com altura de toque de pelo menos 48px.
+- Não criar painel, tabela larga ou menu lateral de desktop.
+
+Antes de considerar a tela pronta, percorrer o fluxo num viewport de celular (cerca de 390px de largura).

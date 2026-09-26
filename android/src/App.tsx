@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { isDefaultPassword, isUnlocked } from './auth'
+import { DemoLoginScreen } from './screens/DemoLoginScreen'
+import { CollaboratorsScreen } from './screens/CollaboratorsScreen'
 import { Layout } from './components/Layout'
 import { AccountScreen } from './screens/AccountScreen'
 import { BackupScreen } from './screens/BackupScreen'
@@ -20,7 +22,8 @@ import { ReportsScreen } from './screens/ReportsScreen'
 import { SaleScreen } from './screens/SaleScreen'
 import { SplashScreen } from './screens/SplashScreen'
 import { isDemo, seedDemoIfEmpty } from './demo'
-import { getAppMode, licenseAllows } from './services/appMode'
+import { getDemoSession } from './services/demoUsers'
+import { chooseStandalone, getAppMode, licenseAllows } from './services/appMode'
 
 const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
 
@@ -28,6 +31,10 @@ function RequireSession({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'load' | 'login' | 'register' | 'ok'>('load')
 
   useEffect(() => {
+    if (isDemo) {
+      setState(getDemoSession() ? 'ok' : 'login')
+      return
+    }
     void isDefaultPassword().then((def) => {
       if (def) setState('register')
       else if (!isUnlocked()) setState('login')
@@ -52,6 +59,12 @@ function RequireLicense({ children }: { children: ReactNode }) {
     void (async () => {
       await seedDemoIfEmpty()
       if (cancelled) return
+      if (isDemo) {
+        const mode = await getAppMode()
+        if (!licenseAllows(mode)) await chooseStandalone()
+        if (!cancelled) setGate('ok')
+        return
+      }
       const mode = await getAppMode()
       if (cancelled) return
       if (!mode) setGate('mode')
@@ -73,7 +86,7 @@ export function App() {
   return (
     <BrowserRouter basename={routerBasename}>
       <Routes>
-        <Route path="/" element={<SplashScreen />} />
+        <Route path="/" element={isDemo ? <DemoLoginScreen /> : <SplashScreen />} />
         <Route
           path="/cadastro"
           element={
@@ -133,6 +146,10 @@ export function App() {
           <Route path="/perfil" element={<ProfileScreen />} />
           <Route path="/ajuda" element={<HelpScreen />} />
           <Route path="/administracao" element={<GroupAdminScreen />} />
+          <Route
+            path="/colaboradores"
+            element={isDemo ? <CollaboratorsScreen /> : <Navigate to="/menu" replace />}
+          />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

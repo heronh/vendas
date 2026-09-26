@@ -172,6 +172,13 @@ a {
   gap: 12px;
 }
 
+.demo-accounts {
+  margin: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .callout-warn {
   margin: 0 0 8px;
   padding: 12px 14px;
@@ -363,7 +370,7 @@ a {
 .field select,
 .search-input {
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);

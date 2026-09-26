@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { setUnlocked } from '../auth'
 import { isDemo } from '../demo'
+import { clearDemoSession } from '../services/demoUsers'
 
 type SyncNotice = { ok: boolean; text: string }
 
@@ -10,7 +10,7 @@ export function Layout() {
   const [notice, setNotice] = useState<SyncNotice | null>(null)
 
   function logout() {
-    setUnlocked(false)
+    clearDemoSession()
     navigate('/', { replace: true })
   }
 

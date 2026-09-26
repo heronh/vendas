@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MenuLink } from '../components/ui'
 import { isDemo } from '../demo'
+import { getDemoSession } from '../services/demoUsers'
 import { getAppMode, licenseAllows, refreshAccountStatus } from '../services/appMode'
 import { syncIfApproved } from '../services/lanSync'
 import produtoIcon from '../../../docs/produto.svg'
 
 export function MenuScreen() {
   const navigate = useNavigate()
-  const [admin, setAdmin] = useState(false)
+  const [admin, setAdmin] = useState(() => isDemo && getDemoSession()?.role === 'admin')
   const [needPay, setNeedPay] = useState(false)
   const [signature, setSignature] = useState('')
 
@@ -64,7 +65,15 @@ export function MenuScreen() {
             subtitle="Uso avulso aguarda cobrança no host"
           />
         ) : null}
-        {admin ? (
+        {isDemo && admin ? (
+          <MenuLink
+            to="/colaboradores"
+            icon="⚙"
+            title="Colaboradores"
+            subtitle="Criar e bloquear acessos"
+          />
+        ) : null}
+        {admin && !isDemo ? (
           <MenuLink
             to="/administracao"
             icon="⚙"

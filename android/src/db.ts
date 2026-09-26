@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { AppSetting, Client, Payment, Product, Profile, Sale } from './types'
+import type { AppSetting, Client, DemoUser, Payment, Product, Profile, Sale } from './types'
 
 export class VendasDB extends Dexie {
   clients!: Table<Client, string>
@@ -8,6 +8,7 @@ export class VendasDB extends Dexie {
   payments!: Table<Payment, string>
   profile!: Table<Profile, string>
   settings!: Table<AppSetting, string>
+  users!: Table<DemoUser, string>
 
   constructor() {
     super('vendas-beauty-brasil')
@@ -21,6 +22,11 @@ export class VendasDB extends Dexie {
     this.version(2).stores({
       settings: 'id',
     })
+    if (import.meta.env.VITE_DEMO === 'true') {
+      this.version(3).stores({
+        users: 'id, &username',
+      })
+    }
   }
 }
 
@@ -56,15 +62,25 @@ export async function clientBalanceCents(clientId: string): Promise<number> {
 }
 
 export async function resetAllData(): Promise<void> {
-  await db.transaction('rw', [db.clients, db.products, db.sales, db.payments, db.profile, db.settings], async () => {
-      await Promise.all([
-        db.clients.clear(),
-        db.products.clear(),
-        db.sales.clear(),
-        db.payments.clear(),
-        db.profile.clear(),
-        db.settings.clear(),
-      ])
+  const shared = [db.clients, db.products, db.sales, db.payments, db.profile, db.settings] as const
+  const clearShared = () =>
+    Promise.all([
+      db.clients.clear(),
+      db.products.clear(),
+      db.sales.clear(),
+      db.payments.clear(),
+      db.profile.clear(),
+      db.settings.clear(),
+    ])
+  if (import.meta.env.VITE_DEMO === 'true') {
+    await db.transaction('rw', [...shared, db.users], async () => {
+      await clearShared()
+      await db.users.clear()
+    })
+    return
+  }
+  await db.transaction('rw', [...shared], async () => {
+    await clearShared()
   })
 }
 
